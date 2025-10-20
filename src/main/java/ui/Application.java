@@ -37,7 +37,7 @@ public class Application extends JFrame {
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         //setContentPane(logInPanel);
         changeToMainMenu();
-
+        //hola
     }
 
     public void initComponents() {
