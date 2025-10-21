@@ -1,4 +1,9 @@
-package EpilepsyDoctorPOJOS;
+package pojos;
+
+import ui.RandomData;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class Patient {
 
@@ -8,19 +13,32 @@ public class Patient {
     private String email;
     private int phoneNumber;
     private String sex;
-    private int age;
-    private int assignedDoctorId;
-    public Patient() {}
+    private LocalDate dateOfBirth;
+    private ArrayList<Report> symptoms;
+    private ArrayList<Signal> recordings;
+    private int assignedDoctorId; //No creo que haga falta
+    public Patient() {
+        this.name = "Jane";
+        this.surname = "Doe";
+        this.email = "jane.doe@gmail.com";
+        this.phoneNumber = 12345678;
+        this.sex = "NonBinay";
+        this.dateOfBirth = LocalDate.now();
+        symptoms = RandomData.generateRandomSymptomReports();
+        recordings = RandomData.generateRandomSignalRecordings();
+    }
 
-    public Patient(int id, String name, String surname, String email, int phoneNumber, String sex, int age, int assignedDoctorId) {
+    public Patient(int id, String name, String surname, String email, int phoneNumber, String sex, LocalDate dateOfBirth, int assignedDoctorId) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.sex = sex;
-        this.age = age;
+        this.dateOfBirth = dateOfBirth;
         this.assignedDoctorId = assignedDoctorId;
+        symptoms = RandomData.generateRandomSymptomReports();
+        recordings = RandomData.generateRandomSignalRecordings();
     }
 
     public int getId() {
@@ -71,12 +89,12 @@ public class Patient {
         this.sex = sex;
     }
 
-    public int getAge() {
-        return age;
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
     }
 
-    public void setAge(int age) {
-        this.age = age;
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public int getAssignedDoctorId() {
@@ -96,9 +114,17 @@ public class Patient {
                 ", email='" + email + '\'' +
                 ", phoneNumber=" + phoneNumber +
                 ", sex='" + sex + '\'' +
-                ", age=" + age +
+                ", age=" + dateOfBirth +
                 ", assignedDoctorId=" + assignedDoctorId +
                 '}';
+    }
+
+    public ArrayList<Report> getSymptoms() {
+        return symptoms;
+    }
+
+    public ArrayList<Signal> getRecordings() {
+        return recordings;
     }
 
 }

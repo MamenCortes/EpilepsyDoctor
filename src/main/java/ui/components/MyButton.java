@@ -1,11 +1,9 @@
 package ui.components;
 
-import ui.Application;
+import ui.windows.Application;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicButtonUI;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

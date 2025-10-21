@@ -1,4 +1,4 @@
-package ui;
+package ui.windows;
 import net.miginfocom.swing.MigLayout;
 import ui.components.MyButton;
 import ui.components.MyComboBox;

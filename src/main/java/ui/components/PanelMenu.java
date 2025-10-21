@@ -1,10 +1,9 @@
 package ui.components;
 
 import net.miginfocom.swing.MigLayout;
-import ui.Application;
+import ui.windows.Application;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 
 public class PanelMenu extends JPanel {

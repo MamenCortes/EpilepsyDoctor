@@ -1,4 +1,4 @@
-package ui;
+package ui.windows;
 
 import ui.components.MenuTemplate;
 import ui.components.MyButton;

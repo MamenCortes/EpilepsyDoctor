@@ -11,10 +11,11 @@ import javax.swing.ListCellRenderer;
 import javax.swing.border.Border;
 
 import net.miginfocom.swing.MigLayout;
-import ui.Application;
+import pojos.Patient;
+import ui.windows.Application;
 
 //ListCellRenderer Patient
-public class PatientCell implements ListCellRenderer<String> {
+public class PatientCell implements ListCellRenderer<Patient> {
 
     private final Color titleColor = Application.turquoise;
     private final Font titleFont = new Font("sansserif", 3, 12);
@@ -24,7 +25,7 @@ public class PatientCell implements ListCellRenderer<String> {
 
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends String> list, String value, int index,
+    public Component getListCellRendererComponent(JList<? extends Patient> list, Patient value, int index,
                                                   boolean isSelected, boolean cellHasFocus) {
 
         JPanel listCell = new JPanel();
@@ -34,15 +35,51 @@ public class PatientCell implements ListCellRenderer<String> {
         listCell.setBorder(border);
 
         //Name
-        JLabel reportHeading = new JLabel("Report:");
-        reportHeading.setForeground(titleColor);
-        reportHeading.setFont(titleFont);
+        JLabel nameHeading = new JLabel("Name and Surname:");
+        nameHeading.setForeground(titleColor);
+        nameHeading.setFont(titleFont);
 
-        JLabel reportInfo = new JLabel(value);
-        reportInfo.setForeground(contentColor);
-        reportInfo.setFont(contentFont);
-        listCell.add(reportHeading, "grow, left");
-        listCell.add(reportInfo, "grow, left");
+        //value.getName()+" "+value.getSurname()
+
+        JLabel nameText = new JLabel(value.getName()+" "+value.getSurname());
+        nameText.setForeground(contentColor);
+        nameText.setFont(contentFont);
+        listCell.add(nameHeading, "grow, left");
+        listCell.add(nameText, "grow, left");
+
+        JLabel ageHeading = new JLabel("Birthday:");
+        ageHeading.setForeground(titleColor);
+        ageHeading.setFont(titleFont);
+        JLabel ageText = new JLabel(value.getDateOfBirth().toString());
+        ageText.setForeground(contentColor);
+        ageText.setFont(contentFont);
+        JLabel genderHeading = new JLabel("Gender:");
+        genderHeading.setForeground(titleColor);
+        genderHeading.setFont(titleFont);
+        JLabel genderText = new JLabel(value.getSex());
+        genderText.setForeground(contentColor);
+        genderText.setFont(contentFont);
+        JLabel phoneHeading = new JLabel("Phone Number:");
+        phoneHeading.setForeground(titleColor);
+        phoneHeading.setFont(titleFont);
+        JLabel phoneText = new JLabel(Integer.toString(value.getPhoneNumber()));
+        phoneText.setForeground(contentColor);
+        phoneText.setFont(contentFont);
+        JLabel emailHeading = new JLabel("Email:");
+        emailHeading.setForeground(titleColor);
+        emailHeading.setFont(titleFont);
+        JLabel emailText = new JLabel(value.getEmail());
+        emailText.setForeground(contentColor);
+        emailText.setFont(contentFont);
+
+        listCell.add(ageHeading, "grow, left");
+        listCell.add(ageText, "grow, left");
+        listCell.add(genderHeading, "grow, left");
+        listCell.add(genderText, "grow, left");
+        listCell.add(phoneHeading, "grow, left");
+        listCell.add(phoneText, "grow, left");
+        listCell.add(emailHeading, "grow, left");
+        listCell.add(emailText, "grow, left");
 
         if(isSelected)
         {

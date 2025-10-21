@@ -1,4 +1,4 @@
-package ui;
+package ui.windows;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

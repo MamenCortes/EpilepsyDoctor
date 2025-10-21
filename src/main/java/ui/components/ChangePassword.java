@@ -1,16 +1,14 @@
 package ui.components;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Font;
 
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
-import ui.Application;
+import ui.windows.Application;
 
 public class ChangePassword extends JPanel {
 

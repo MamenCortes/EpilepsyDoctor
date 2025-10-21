@@ -1,6 +1,6 @@
 package ui.components;
 
-import ui.Application;
+import ui.windows.Application;
 
 import java.awt.Color;
 import java.awt.FontMetrics;

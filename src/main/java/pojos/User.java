@@ -1,4 +1,4 @@
-package EpilepsyDoctorPOJOS;
+package pojos;
 
 public class User {
 

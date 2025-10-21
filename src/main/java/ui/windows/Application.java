@@ -1,9 +1,11 @@
-package ui;
+package ui.windows;
+
+import org.example.SymptomType;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class Application extends JFrame {
     public static Color darker_purple = new Color(114, 82, 153); //#725299
@@ -17,7 +19,7 @@ public class Application extends JFrame {
     public static Color lighter_turquoise = new Color(243, 250, 249);//#f3faf9
     public static Color darker_turquoise = new Color(73, 129, 122);
     public static Color dark_turquoise = new Color(52, 152, 143); //#34988f
-
+    public static Map<String, Color> symptomColors;
     //UI Panels
     private ArrayList<JPanel> appPanels;
     private UserLogIn logInPanel;
@@ -37,7 +39,8 @@ public class Application extends JFrame {
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         //setContentPane(logInPanel);
         changeToMainMenu();
-        //hola
+
+        symptomColors = generateSymptomColors(SymptomType.class);
     }
 
     public void initComponents() {
@@ -56,10 +59,15 @@ public class Application extends JFrame {
         this.setContentPane(logInPanel);
     }
 
+    //TODO: pensar cómo gestionar los paneles repetidos
     public void changeToPanel(JPanel panel) {
         hideAllPanels();
+        if(!appPanels.contains(panel)) {
+            appPanels.add(panel);
+        }
         panel.setVisible(true);
         this.setContentPane(panel);
+        System.out.println("Number of panels: " + appPanels.size());
     }
 
     public void changeToMainMenu(){
@@ -72,14 +80,42 @@ public class Application extends JFrame {
 
         mainMenu.setVisible(true);
         this.setContentPane(mainMenu);
+        System.out.println("Number of panels: " + appPanels.size());
 
     }
 
+    public void changeToMainMenuAndRemove(JPanel panel) {
+        panel.setVisible(false);
+        changeToMainMenu();
+        if(appPanels.contains(panel)) {
+            appPanels.remove(panel);
+        }
+        System.out.println("Number of panels: " + appPanels.size());
+    }
     private void hideAllPanels() {
         for (JPanel jPanel : appPanels) {
             if(jPanel.isVisible()) {
                 jPanel.setVisible(false);
             }
         }
+    }
+
+    public static Map<String, Color> generateSymptomColors(Class<? extends Enum<?>> enumClass) {
+        Map<String, Color> colorMap = new HashMap<>();
+        Random random = new Random();
+
+        Set<Color> usedColors = new HashSet<>();
+
+        for (Enum<?> constant : enumClass.getEnumConstants()) {
+            Color color;
+            do {
+                color = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
+            } while (usedColors.contains(color)); // evita duplicados exactos
+
+            usedColors.add(color);
+            colorMap.put(constant.name(), color);
+        }
+
+        return colorMap;
     }
 }

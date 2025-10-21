@@ -1,4 +1,4 @@
-package ui;
+package ui.windows;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -10,22 +10,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import net.miginfocom.swing.MigLayout;
+import pojos.Patient;
+import ui.RandomData;
 import ui.components.MyButton;
 import ui.components.MyTextField;
-import ui.components.ReportCell;
+import ui.components.PatientCell;
 import javax.swing.*;
 
-public class ReportsHistory extends JPanel implements ActionListener, MouseListener {
+public class SearchPatients extends JPanel implements ActionListener, MouseListener {
 
     private static final long serialVersionUID = -2213334704230710767L;
     private Application appMain;
     protected final Font titleFont = new Font("sansserif", 3, 15);
     protected final Color titleColor = Application.dark_purple;
     protected JLabel title;
-    protected String titleText = " Reports History";
-    protected ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/search-report64_2.png"));
+    protected String titleText = " Search Patients ";
+    protected ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/patient-info64-2.png"));
     protected JScrollPane scrollPane1;
-    protected String searchText = "Search By Date";
+    protected String searchText = "Search By Surname";
     protected MyTextField searchByTextField;
     protected MyButton searchButton;
     protected MyButton cancelButton;
@@ -33,13 +35,17 @@ public class ReportsHistory extends JPanel implements ActionListener, MouseListe
     protected JLabel errorMessage;
     protected MyButton goBackButton;
     //protected Application appMain;
-    protected JList<String> reportsList;
-    protected DefaultListModel<String> reportsDefListModel;
+    protected JList<Patient> patientsList;
+    protected DefaultListModel<Patient> patientsDefListModel;
 
-    public ReportsHistory(Application appMain) {
+    public SearchPatients(Application appMain) {
         this.appMain = appMain;
         initMainPanel();
-        showReports(generateReports());
+        List<Patient> patients = new ArrayList<>();
+        for(int i = 0; i < 10; i++) {
+            patients.add(RandomData.generateRandomPatient());
+        }
+        showPatients(patients);
         //showPatients(null);
     }
 
@@ -86,7 +92,10 @@ public class ReportsHistory extends JPanel implements ActionListener, MouseListe
         searchByTextField.setHint("YYYY-MM-DD");
         add(searchByTextField, "cell 0 2 2 1, alignx center, grow");
 
+        //cancelButton = new MyButton("CANCEL", Application.turquoise, Color.white);
         cancelButton = new MyButton("CANCEL");
+        //cancelButton.setBackground(new Color(7, 164, 121));
+        //cancelButton.setForeground(new Color(250, 250, 250));
         cancelButton.addActionListener(this);
         add(cancelButton, "cell 0 3, left, gapy 5, grow");
 
@@ -97,7 +106,7 @@ public class ReportsHistory extends JPanel implements ActionListener, MouseListe
         openFormButton = new MyButton("OPEN FILE");
         openFormButton.addActionListener(this);
         add(openFormButton, "cell 0 4, center, gapy 5, span 2, grow");
-        openFormButton.setVisible(false);
+        openFormButton.setVisible(true);
 
         goBackButton = new MyButton("BACK TO MENU", Application.turquoise, Color.white);
         goBackButton.addActionListener(this);
@@ -114,8 +123,8 @@ public class ReportsHistory extends JPanel implements ActionListener, MouseListe
         //showPatients(appMain.patientMan.searchPatientsBySurname("Blanco"));
         //showDoctors(createRandomDoctors());
     }
-
-    protected void showReports(List<String> reports) {
+    //TODO: Change for patient cell
+    protected void showPatients(List<Patient> patients) {
 
         //JPanel gridPanel = new JPanel(new GridLayout(patients.size(), 0));
         JScrollPane scrollPane1 = new JScrollPane();
@@ -123,29 +132,54 @@ public class ReportsHistory extends JPanel implements ActionListener, MouseListe
         scrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         //scrollPane1.setViewportView(gridPanel);
 
-        reportsDefListModel = new DefaultListModel<>();
-        if(reports != null) {
-            for (String r : reports) {
-                reportsDefListModel.addElement(r);
+        patientsDefListModel = new DefaultListModel<Patient>();
+        if(patients != null) {
+            for (Patient r : patients) {
+                patientsDefListModel.addElement(r);
 
             }
         }
 
-        reportsList = new JList<String>(reportsDefListModel);
-        reportsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        reportsList.setCellRenderer(new ReportCell());
-        reportsList.addMouseListener(this);
-        scrollPane1.setViewportView(reportsList);
+
+        patientsList = new JList<Patient>(patientsDefListModel);
+        patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        patientsList.setCellRenderer(new PatientCell());
+        patientsList.addMouseListener(this);
+        scrollPane1.setViewportView(patientsList);
 
         scrollPane1.setPreferredSize(this.getPreferredSize());
 
         add(scrollPane1,  "cell 2 1 2 6, grow, gap 10");
     }
 
+    private void showErrorMessage(String message) {
+        errorMessage.setText(message);
+        errorMessage.setVisible(true);
+    }
+
+    private void hideErrorMessage() {
+        errorMessage.setVisible(false);
+    }
+
+    private void resetPanel(){
+        //TODO: reset panel when going back to menu
+        hideErrorMessage();
+        searchByTextField.setText("");
+    }
 
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == goBackButton) {
             appMain.changeToMainMenu();
+        }else if(e.getSource() == openFormButton){
+            Patient patient = patientsList.getSelectedValue();
+            if(patient == null) {
+                showErrorMessage("No patient Selected");
+            }else {
+                showErrorMessage("Selected patient: " + patient.getName()+" "+patient.getSurname());
+                resetPanel();
+                appMain.changeToPanel(new PatientInfo(appMain, patient));
+                //appMain.changeToAdmitPatient(patient);
+            }
         }
         /*if(e.getSource() == searchButton) {
             errorMessage.setVisible(false);

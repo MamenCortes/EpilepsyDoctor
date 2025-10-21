@@ -1,4 +1,4 @@
-package ui;
+package ui.windows;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -12,20 +12,20 @@ import java.util.Random;
 import net.miginfocom.swing.MigLayout;
 import ui.components.MyButton;
 import ui.components.MyTextField;
-import ui.components.PatientCell;
+import ui.components.RecordingCell;
 import javax.swing.*;
 
-public class SearchPatients extends JPanel implements ActionListener, MouseListener {
+public class ReportsHistory extends JPanel implements ActionListener, MouseListener {
 
     private static final long serialVersionUID = -2213334704230710767L;
     private Application appMain;
     protected final Font titleFont = new Font("sansserif", 3, 15);
     protected final Color titleColor = Application.dark_purple;
     protected JLabel title;
-    protected String titleText = " Search Patients ";
-    protected ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/patient-info64-2.png"));
+    protected String titleText = " Reports History";
+    protected ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/search-report64_2.png"));
     protected JScrollPane scrollPane1;
-    protected String searchText = "Search By Surname";
+    protected String searchText = "Search By Date";
     protected MyTextField searchByTextField;
     protected MyButton searchButton;
     protected MyButton cancelButton;
@@ -33,13 +33,13 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
     protected JLabel errorMessage;
     protected MyButton goBackButton;
     //protected Application appMain;
-    protected JList<String> patientsList;
-    protected DefaultListModel<String> patientsDefListModel;
+    protected JList<String> reportsList;
+    protected DefaultListModel<String> reportsDefListModel;
 
-    public SearchPatients(Application appMain) {
+    public ReportsHistory(Application appMain) {
         this.appMain = appMain;
         initMainPanel();
-        showPatients(generateReports());
+        showReports(generateReports());
         //showPatients(null);
     }
 
@@ -86,10 +86,7 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         searchByTextField.setHint("YYYY-MM-DD");
         add(searchByTextField, "cell 0 2 2 1, alignx center, grow");
 
-        //cancelButton = new MyButton("CANCEL", Application.turquoise, Color.white);
         cancelButton = new MyButton("CANCEL");
-        //cancelButton.setBackground(new Color(7, 164, 121));
-        //cancelButton.setForeground(new Color(250, 250, 250));
         cancelButton.addActionListener(this);
         add(cancelButton, "cell 0 3, left, gapy 5, grow");
 
@@ -117,8 +114,8 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         //showPatients(appMain.patientMan.searchPatientsBySurname("Blanco"));
         //showDoctors(createRandomDoctors());
     }
-    //TODO: Change for patient cell
-    protected void showPatients(List<String> reports) {
+
+    protected void showReports(List<String> reports) {
 
         //JPanel gridPanel = new JPanel(new GridLayout(patients.size(), 0));
         JScrollPane scrollPane1 = new JScrollPane();
@@ -126,20 +123,19 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         scrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         //scrollPane1.setViewportView(gridPanel);
 
-        patientsDefListModel = new DefaultListModel<>();
+        reportsDefListModel = new DefaultListModel<>();
         if(reports != null) {
             for (String r : reports) {
-                patientsDefListModel.addElement(r);
+                reportsDefListModel.addElement(r);
 
             }
         }
 
-
-        patientsList = new JList<String>(patientsDefListModel);
-        patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        patientsList.setCellRenderer(new PatientCell());
-        patientsList.addMouseListener(this);
-        scrollPane1.setViewportView(patientsList);
+        reportsList = new JList<String>(reportsDefListModel);
+        reportsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        //reportsList.setCellRenderer(new RecordingCell());
+        reportsList.addMouseListener(this);
+        scrollPane1.setViewportView(reportsList);
 
         scrollPane1.setPreferredSize(this.getPreferredSize());
 

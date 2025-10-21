@@ -3,7 +3,7 @@ package ui.components;
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
-import ui.Application;
+import ui.windows.Application;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
