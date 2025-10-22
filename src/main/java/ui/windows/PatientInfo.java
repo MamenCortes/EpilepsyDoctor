@@ -60,7 +60,7 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
     //protected Application appMain;
     protected JList<Patient> patientsList;
     protected DefaultListModel<Patient> patientsDefListModel;
-    private Patient patient;
+    private final Patient patient;
 
     //TODO: implement search algorithms
     public PatientInfo(Application appMain, Patient patient) {
@@ -463,6 +463,16 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             cardLayout.show(cardPanel, "Panel2");
         }else if(e.getSource() == symptomsCalendarButton){
             cardLayout.show(cardPanel, "Panel3");
+        }else if(e.getSource() == openRecordingButton){
+            Signal signal = recordingsList.getSelectedValue();
+            if(signal == null) {
+                showErrorMessage("No signal Selected");
+            }else {
+                showErrorMessage("Selected signal: " + patient.getName()+" "+patient.getSurname());
+                //resetPanel();
+                appMain.changeToPanel(new RecordingGraphs(appMain, this, signal, titleText));
+                //appMain.changeToAdmitPatient(patient);
+            }
         }
         /*if(e.getSource() == searchButton) {
             errorMessage.setVisible(false);

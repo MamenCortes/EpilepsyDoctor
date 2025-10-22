@@ -15,14 +15,12 @@ public class MainMenu extends MenuTemplate {
     private String company_name;
     private DoctorInfo doctorInfoPanel;
     private SearchPatients searchPatientsPanel;
-    private ReportsHistory reportsHistoryPanel;
 
     public MainMenu(Application appMenu) {
         //super();
         this.appMenu = appMenu;
         doctorInfoPanel = new DoctorInfo(appMenu);
         searchPatientsPanel = new SearchPatients(appMenu);
-        reportsHistoryPanel = new ReportsHistory(appMenu);
 
         addButtons();
         company_name = "NIGHT GUARDIAN: EPILEPSY";
