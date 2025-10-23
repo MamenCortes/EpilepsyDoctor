@@ -469,6 +469,8 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                 showErrorMessage("No signal Selected");
             }else {
                 showErrorMessage("Selected signal: " + patient.getName()+" "+patient.getSurname());
+                //TODO: request real signal to the server si no se ha pedido ya
+                signal.setEcg(Application.importECG());
                 //resetPanel();
                 appMain.changeToPanel(new RecordingGraphs(appMain, this, signal, titleText));
                 //appMain.changeToAdmitPatient(patient);

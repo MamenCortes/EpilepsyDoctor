@@ -4,8 +4,9 @@ import net.miginfocom.swing.MigLayout;
 import pojos.Patient;
 import pojos.Signal;
 import ui.components.MyButton;
-
+import ui.components.SignalGraphPanel;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +27,13 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
     private JLabel title;
     private MyButton goBackButton;
     private JLabel errorMessage;
+    private SignalGraphPanel ecgGraph;
+    private SignalGraphPanel accGraph;
+    private CardLayout cardLayout;
+    private JPanel cardPanel;
+    private JButton ecgButton;
+    private JButton accButton;
+    private JTextArea commentsTextArea;
 
     public RecordingGraphs(Application appMain, PatientInfo parentPanel, Signal signal, String patientName) {
         this.appMain = appMain;
@@ -36,7 +44,7 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
     }
 
     private void initMainPanel() {
-        this.setLayout(new MigLayout("fill, inset 20, gap 0, wrap 3", "[grow 5]5[grow 5]5[grow 40][grow 40]", "[][][][][][][][][][]"));
+        this.setLayout(new MigLayout("fill, inset 20, gap 0, wrap 3", "[20%]5[80%]", "[][][][]push[][][][][][]"));
         this.setBackground(Color.white);
         //Add Title
         title = new JLabel(titleText);
@@ -47,9 +55,43 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
         title.setIcon(icon);
         add(title, "cell 0 0 3 1, alignx left");
 
+        ecgButton = new MyButton("ECG");
+        ecgButton.addActionListener(this);
+        add(ecgButton, "cell 0 1, center, gapy 10, growx");
+
+        accButton = new MyButton("ACC");
+        accButton.addActionListener(this);
+        add(accButton, "cell 0 2, center, gapy 5, growx");
+
+        commentsTextArea = new JTextArea(signal.getComments());
+        commentsTextArea.setEditable(true);
+        commentsTextArea.setLineWrap(true);
+        add(commentsTextArea, "cell 0 3, center, gapy 5, growx");
+
+        TitledBorder border = BorderFactory.createTitledBorder("Comments");
+        border.setTitleFont(titleFont);
+        border.setTitleColor(Application.turquoise);
+        commentsTextArea.setBorder(border);
+
+        cardLayout = new CardLayout();
+        cardPanel = new JPanel(cardLayout);
+
+        ecgGraph = new SignalGraphPanel(signal.getEcg(), signal.getFrequency(), "ECG Signal");
+        //add(ecgGraph, "cell 0 1 3 3, alignx left");
+
+        accGraph = new SignalGraphPanel(signal.getEcg(), signal.getFrequency(), "ACC Signal");
+        //add(accGraph, "cell 0 5 3 3, alignx left");
+
+        cardPanel.add(ecgGraph, "Panel1");
+        cardPanel.add(accGraph, "Panel2");
+
+        // Mostrar un panel:
+        cardLayout.show(cardPanel, "Panel1");
+        add(cardPanel, "cell 1 1, span 1 7, grow");
+
         goBackButton = new MyButton("BACK TO MENU", Application.turquoise, Color.white);
         goBackButton.addActionListener(this);
-        add(goBackButton, "cell 0 7, center, gapy 5, growx");
+        add(goBackButton, "cell 0 9, center, gapy 5, growx");
         goBackButton.setVisible(true);
 
         errorMessage = new JLabel();
@@ -64,7 +106,13 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == goBackButton) {
             appMain.changeToPanel(parentPanel);
+            //TODO: Save comments in signal
+            //TODO: Reset view
             //And delete this one
+        }else if (e.getSource() == accButton) {
+            cardLayout.show(cardPanel, "Panel2");
+        }else if (e.getSource() == ecgButton) {
+            cardLayout.show(cardPanel, "Panel1");
         }
     }
 

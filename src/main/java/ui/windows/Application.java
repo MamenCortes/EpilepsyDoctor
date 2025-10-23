@@ -1,10 +1,13 @@
 package ui.windows;
 
 import org.example.SymptomType;
+import ui.ECGFileReader;
+import ui.components.SignalGraphPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.IOException;
 import java.util.*;
 
 public class Application extends JFrame {
@@ -37,12 +40,33 @@ public class Application extends JFrame {
         logInPanel = new UserLogIn(this);
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        //initGraph();
         //setContentPane(logInPanel);
         changeToMainMenu();
 
         symptomColors = generateSymptomColors(SymptomType.class);
     }
 
+    public static double[] importECG() {
+        String filePath = "C:/path/to/record.txt";
+        filePath = "C:\\Users\\mamen\\OneDrive - Fundación Universitaria San Pablo CEU\\06_BecaPregrado\\2023-2024\\Prototipo_registros\\Prototipo_Day1_2024-02-01_11-20-02.txt";
+        try {
+            String date = "2024-02-01";
+            int samplingFrequency = 1000; // Adjusted sampling rate = 10 Hz
+            String startTime = "11:20:02";
+
+            double[] ecg = ECGFileReader.readECGFromFile(filePath);
+            System.out.println("Loaded " + ecg.length + " samples.");
+            //SignalGraphPanel ecgGraph = new SignalGraphPanel(ecg, samplingFrequency);
+            //setContentPane(ecgGraph);
+            return ecg;
+
+        }catch (IOException e){
+            System.out.println("Error reading file");
+            return null;
+        }
+    }
     public void initComponents() {
         setTitle("Doctor Application");
         //setSize(602, 436);

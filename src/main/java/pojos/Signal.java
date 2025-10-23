@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class Signal {
     private int id;
     private Integer frequency;
-    private String ecg;
+    private double[] ecg;
     private String accx;
     private String accy;
     private String accz;
@@ -15,10 +15,10 @@ public class Signal {
     private int reportId;
 
     public Signal() {
-
+        ecg = new double[0];
     }
 
-    public Signal(LocalDate date, Integer frequency, String ecg, String accx, String accy, String accz, String timestamp, String comments, int reportId) {
+    public Signal(LocalDate date, Integer frequency, double[] ecg, String accx, String accy, String accz, String timestamp, String comments, int reportId) {
         this.id = id;
         this.frequency = frequency;
         this.ecg = ecg;
@@ -38,8 +38,8 @@ public class Signal {
     public Integer getFrequency() { return frequency; }
     public void setFrequency(Integer frequency) { this.frequency = frequency; }
 
-    public String getEcg() { return ecg; }
-    public void setEcg(String ecg) { this.ecg = ecg; }
+    public double[] getEcg() { return ecg; }
+    public void setEcg(double[] ecg) { this.ecg = ecg; }
 
     public String getTimestamp() { return timestamp; }
     public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
