@@ -32,10 +32,6 @@ public class DoctorInfo extends JPanel implements ActionListener {
 
 
     //Format variables: Color and Font
-    //private final Color titleColor = new Color(7, 164, 121);
-    //private final Font titleFont = new Font("sansserif", 3, 15);
-    //private final Font contentFont = new Font("sansserif", 1, 12);
-    //private final Color contentColor = new Color(24, 116, 67);
     private final Color titleColor = Application.dark_purple;
     private final Font titleFont = new Font("sansserif", Font.BOLD, 25);
     private final Font contentFont = new Font("sansserif", 1, 12);
