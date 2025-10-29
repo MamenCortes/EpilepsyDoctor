@@ -4,6 +4,7 @@ import ui.components.MenuTemplate;
 import ui.components.MyButton;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 
 public class MainMenu extends MenuTemplate {
     private static final long serialVersionUID = 6050014345831062858L;
@@ -47,6 +48,11 @@ public class MainMenu extends MenuTemplate {
         if(e.getSource()== seeDoctorInfoBt) {
             //appMenu.changeToAddPatient();
             appMenu.changeToPanel(doctorInfoPanel);
+            try {
+                Application.client.requestDoctorInfo();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }else if(e.getSource()== searchPatientsBt) {
             //appMenu.changeToSearchPatient();
             appMenu.changeToPanel(searchPatientsPanel);

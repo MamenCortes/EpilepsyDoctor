@@ -1,5 +1,6 @@
 package ui.windows;
 
+import network.Client;
 import org.example.SymptomType;
 import ui.ECGFileReader;
 import ui.components.SignalGraphPanel;
@@ -7,6 +8,8 @@ import ui.components.SignalGraphPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -28,6 +31,9 @@ public class Application extends JFrame {
     private UserLogIn logInPanel;
     private MainMenu mainMenu;
 
+    //network
+    public static Client client;
+
     public static void main(String[] args) {
         Application app = new Application();
         app.setVisible(true);
@@ -41,6 +47,7 @@ public class Application extends JFrame {
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
+        client = new Client();
         //initGraph();
         //setContentPane(logInPanel);
         changeToMainMenu();
@@ -73,8 +80,25 @@ public class Application extends JFrame {
         setLayout(null);
         setLocationRelativeTo(null);
         setIconImage(new ImageIcon(getClass().getResource("/icons/night_guardian_mini_500.png")).getImage());
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // handle manually
+
+        // Window listener to stop server when closing
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                stopEverything();
+            }
+        });
+
+    }
+
+    private void stopEverything(){
+        if(client != null){
+            client.stopClient();
+        }
+        dispose();
     }
 
     public void changeToUserLogIn() {
