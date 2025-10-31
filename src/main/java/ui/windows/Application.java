@@ -33,6 +33,8 @@ public class Application extends JFrame {
 
     //network
     public static Client client;
+    private String serverIPAdress = "localhost";
+    private int serverPort = 9009;
 
     public static void main(String[] args) {
         Application app = new Application();
@@ -47,7 +49,7 @@ public class Application extends JFrame {
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        client = new Client();
+        client = new Client(serverIPAdress, serverPort);
         //initGraph();
         //setContentPane(logInPanel);
         changeToMainMenu();
