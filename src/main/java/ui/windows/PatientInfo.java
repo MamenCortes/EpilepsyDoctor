@@ -1,7 +1,6 @@
 package ui.windows;
 
 import net.miginfocom.swing.MigLayout;
-import org.example.SymptomType;
 import pojos.Patient;
 import pojos.Report;
 import pojos.Signal;
@@ -157,7 +156,7 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         phoneNumber.setEnabled(false);
         MyTextField sex = new MyTextField();
         //sex.setText("Non Binary");
-        sex.setText(patient.getSex());
+        sex.setText(patient.getGender());
         sex.setEnabled(false);
         MyTextField birthDate = new MyTextField();
         //birthDate.setText("1999-11-11");

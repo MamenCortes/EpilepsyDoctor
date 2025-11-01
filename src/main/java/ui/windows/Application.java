@@ -2,6 +2,9 @@ package ui.windows;
 
 import network.Client;
 import org.example.SymptomType;
+import pojos.Doctor;
+import pojos.Patient;
+import pojos.User;
 import ui.ECGFileReader;
 import ui.components.SignalGraphPanel;
 
@@ -32,9 +35,13 @@ public class Application extends JFrame {
     private MainMenu mainMenu;
 
     //network
-    public static Client client;
+    public Client client;
     private String serverIPAdress = "localhost";
     private int serverPort = 9009;
+
+    //Logic
+    public Doctor doctor;
+    public User user;
 
     public static void main(String[] args) {
         Application app = new Application();
@@ -49,10 +56,12 @@ public class Application extends JFrame {
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        client = new Client(serverIPAdress, serverPort);
+        client = new Client(serverIPAdress, serverPort, this);
         //initGraph();
-        //setContentPane(logInPanel);
-        changeToMainMenu();
+        setContentPane(logInPanel);
+        //changeToMainMenu();
+        doctor = new Doctor();
+        user = new User();
 
         symptomColors = generateSymptomColors(SymptomType.class);
     }

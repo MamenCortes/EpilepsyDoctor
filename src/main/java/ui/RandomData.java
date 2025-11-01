@@ -25,7 +25,7 @@ public class RandomData {
         patient.setSurname(surname);
         patient.setEmail(email);
         patient.setPhoneNumber(phone);  // Assuming setPhone accepts an Integer
-        patient.setSex(sex);
+        patient.setGender(sex);
         patient.setDateOfBirth(generateRandomLocalDate(new Random()));
         return patient;
     }
@@ -55,7 +55,7 @@ public class RandomData {
         doctor.setSurname(surname);
         doctor.setEmail(email);
         doctor.setPhoneNumber(phone);  // Assuming setPhone accepts an Integer
-        doctor.setAddress(address);
+        doctor.setDepartment(address);
         return doctor;
     }
 

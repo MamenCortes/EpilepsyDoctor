@@ -20,7 +20,7 @@ public class MainMenu extends MenuTemplate {
     public MainMenu(Application appMenu) {
         //super();
         this.appMenu = appMenu;
-        doctorInfoPanel = new DoctorInfo(appMenu);
+        doctorInfoPanel = new DoctorInfo(appMenu, appMenu.doctor);
         searchPatientsPanel = new SearchPatients(appMenu);
 
         addButtons();
@@ -48,11 +48,11 @@ public class MainMenu extends MenuTemplate {
         if(e.getSource()== seeDoctorInfoBt) {
             //appMenu.changeToAddPatient();
             appMenu.changeToPanel(doctorInfoPanel);
-            try {
-                Application.client.requestDoctorInfo();
+            /*try {
+                appMenu.client.requestDoctorInfo();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
-            }
+            }*/
         }else if(e.getSource()== searchPatientsBt) {
             //appMenu.changeToSearchPatient();
             appMenu.changeToPanel(searchPatientsPanel);

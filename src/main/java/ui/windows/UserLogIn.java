@@ -3,6 +3,7 @@ package ui.windows;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.Objects;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class UserLogIn extends JPanel implements ActionListener{
     private MyTextField passwordTxFLogIn;
     private MyComboBox<String> roleCB;
     private JPanel coverPanel;
-    private JLabel errorMessage;
+    //private JLabel errorMessage;
     private JLabel errorMessage2;
 
     /**
@@ -61,7 +62,7 @@ public class UserLogIn extends JPanel implements ActionListener{
 
         //Log In panel
         errorMessage2 = new JLabel();
-        errorMessage = new JLabel();
+        //errorMessage = new JLabel();
         panelLogIn = new JPanel();
         panelLogIn.setOpaque(true);
         initLogin();
@@ -75,7 +76,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                 int width = getWidth();
                 int height = getHeight();
 
-                // 🔹 Degradado de izquierda a derecha (puedes cambiarlo a vertical si quieres)
+                // Degradado de izquierda a derecha (puedes cambiarlo a vertical si quieres)
                 GradientPaint gradient = new GradientPaint(0, 0, Application.light_purple, 0, getHeight(), Application.light_turquoise);
 
                 g2d.setPaint(gradient);
@@ -214,7 +215,17 @@ public class UserLogIn extends JPanel implements ActionListener{
         System.out.println("email: " + email+" password: "+password);
         if(!email.isBlank() && !password.isBlank()) {
 
-            appMenu.changeToMainMenu();
+            try {
+                if(appMenu.client.login(email, password)){
+                    appMenu.changeToMainMenu();
+                    return true;
+                }else{
+                    showErrorMessage("Incorrect email or password");
+                }
+            } catch (IOException e) {
+                showErrorMessage(e.getMessage());
+            }
+            //appMenu.changeToMainMenu();
             /*User user = appMenu.jpaUserMan.login(email, password);
             System.out.println(user);
 
@@ -227,7 +238,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                 return false;
             }*/
 
-            return true;
+            return false;
 
         }else {
             showErrorMessage("Complete all fields");
@@ -312,14 +323,11 @@ public class UserLogIn extends JPanel implements ActionListener{
     }
 
     public void showErrorMessage(String text){
-        errorMessage.setVisible(true);
-        errorMessage.setText(text);
         errorMessage2.setVisible(true);
         errorMessage2.setText(text);
     }
 
     public void hideErrorMessage() {
-        errorMessage.setVisible(false);
         errorMessage2.setVisible(false);
     }
 

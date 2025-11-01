@@ -1,5 +1,6 @@
 package ui.windows;
 import net.miginfocom.swing.MigLayout;
+import pojos.Doctor;
 import ui.components.MyButton;
 import ui.components.MyComboBox;
 import ui.components.MyTextField;
@@ -37,11 +38,13 @@ public class DoctorInfo extends JPanel implements ActionListener {
     private final Font contentFont = new Font("sansserif", 1, 12);
     private final Color contentColor = Application.dark_turquoise;
 
-
+    private Doctor doctor;
 
     //private JDateChooser birthDate;
-    public DoctorInfo(Application appMain) {
+    public DoctorInfo(Application appMain, Doctor doctor) {
         this.appMain = appMain;
+        this.doctor = doctor;
+        System.out.println(doctor);
         initDoctorInfo();
 
     }
@@ -52,24 +55,20 @@ public class DoctorInfo extends JPanel implements ActionListener {
         //Initialize values
         //TODO: replace with actual doctor values
         name = new MyTextField();
-        name.setText("Dr. Michal Al-Hajjar");
+        //name.setText("Dr. Michal Al-Hajjar");
+        name.setText(doctor.getName()+" "+doctor.getSurname());
         name.setEnabled(false); //Doesnt allow editing
         email = new MyTextField();
-        email.setText("michal.alhajjar@gmail.com");
+        email.setText(doctor.getEmail());
         email.setEnabled(false);
         phoneNumber = new MyTextField();
-        phoneNumber.setText("123456789");
+        phoneNumber.setText(doctor.getPhoneNumber().toString());
         phoneNumber.setEnabled(false);
         speciality = new MyTextField();
-        speciality.setText("Neurologist | Epilepsy Specialist ");
+        speciality.setText(doctor.getSpeciality());
         speciality.setEnabled(false);
         office = new MyTextField();
-        office.setText(
-                "Hospital General Universitario Gregorio Marañón\n" +
-                        "\n" +
-                        "C/ Doctor Esquerdo, 46\n" +
-                        "\n" +
-                        "28007 Madrid1");
+        office.setText(doctor.getDepartment());
         office.setEnabled(false);
         formContainer = new JPanel();
         initDoctorForm();

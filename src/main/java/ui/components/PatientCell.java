@@ -56,7 +56,7 @@ public class PatientCell implements ListCellRenderer<Patient> {
         JLabel genderHeading = new JLabel("Gender:");
         genderHeading.setForeground(titleColor);
         genderHeading.setFont(titleFont);
-        JLabel genderText = new JLabel(value.getSex());
+        JLabel genderText = new JLabel(value.getGender());
         genderText.setForeground(contentColor);
         genderText.setFont(contentFont);
         JLabel phoneHeading = new JLabel("Phone Number:");

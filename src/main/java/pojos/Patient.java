@@ -1,5 +1,6 @@
 package pojos;
 
+import com.google.gson.JsonObject;
 import ui.RandomData;
 
 import java.time.LocalDate;
@@ -12,29 +13,31 @@ public class Patient {
     private String surname;
     private String email;
     private int phoneNumber;
-    private String sex;
+    private String gender;
     private LocalDate dateOfBirth;
     private ArrayList<Report> symptoms;
     private ArrayList<Signal> recordings;
     private int assignedDoctorId; //No creo que haga falta
+
+
     public Patient() {
         this.name = "Jane";
         this.surname = "Doe";
         this.email = "jane.doe@gmail.com";
         this.phoneNumber = 12345678;
-        this.sex = "NonBinay";
+        this.gender = "NonBinay";
         this.dateOfBirth = LocalDate.now();
         symptoms = RandomData.generateRandomSymptomReports();
         recordings = RandomData.generateRandomSignalRecordings();
     }
 
-    public Patient(int id, String name, String surname, String email, int phoneNumber, String sex, LocalDate dateOfBirth, int assignedDoctorId) {
+    public Patient(int id, String name, String surname, String email, int phoneNumber, String gender, LocalDate dateOfBirth, int assignedDoctorId) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.email = email;
         this.phoneNumber = phoneNumber;
-        this.sex = sex;
+        this.gender = gender;
         this.dateOfBirth = dateOfBirth;
         this.assignedDoctorId = assignedDoctorId;
         symptoms = RandomData.generateRandomSymptomReports();
@@ -81,12 +84,12 @@ public class Patient {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getSex() {
-        return sex;
+    public String getGender() {
+        return gender;
     }
 
-    public void setSex(String sex) {
-        this.sex = sex;
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public LocalDate getDateOfBirth() {
@@ -105,6 +108,7 @@ public class Patient {
         this.assignedDoctorId = assignedDoctorId;
     }
 
+
     @Override
     public String toString() {
         return "Patient{" +
@@ -113,7 +117,7 @@ public class Patient {
                 ", surname='" + surname + '\'' +
                 ", email='" + email + '\'' +
                 ", phoneNumber=" + phoneNumber +
-                ", sex='" + sex + '\'' +
+                ", sex='" + gender + '\'' +
                 ", age=" + dateOfBirth +
                 ", assignedDoctorId=" + assignedDoctorId +
                 '}';
@@ -127,4 +131,16 @@ public class Patient {
         return recordings;
     }
 
+    public static Patient fromJson(JsonObject jason) {
+        Patient patient = new Patient();
+        patient.setId(jason.get("id").getAsInt());
+        patient.setName(jason.get("name").getAsString());
+        patient.setSurname(jason.get("surname").getAsString());
+        patient.setEmail(jason.get("email").getAsString());
+        patient.setPhoneNumber(jason.get("contact").getAsInt());
+        patient.setDateOfBirth(LocalDate.parse(jason.get("dateOfBirth").getAsString()));
+        patient.setGender(jason.get("gender").getAsString());
+        patient.setAssignedDoctorId(jason.get("doctorId").getAsInt());
+        return patient;
+    }
 }
