@@ -38,13 +38,13 @@ public class DoctorInfo extends JPanel implements ActionListener {
     private final Font contentFont = new Font("sansserif", 1, 12);
     private final Color contentColor = Application.dark_turquoise;
 
-    private Doctor doctor;
+    //private Doctor doctor;
 
     //private JDateChooser birthDate;
-    public DoctorInfo(Application appMain, Doctor doctor) {
+    public DoctorInfo(Application appMain) {
         this.appMain = appMain;
-        this.doctor = doctor;
-        System.out.println(doctor);
+        //this.doctor = doctor;
+        //System.out.println(doctor);
         initDoctorInfo();
 
     }
@@ -56,19 +56,19 @@ public class DoctorInfo extends JPanel implements ActionListener {
         //TODO: replace with actual doctor values
         name = new MyTextField();
         //name.setText("Dr. Michal Al-Hajjar");
-        name.setText(doctor.getName()+" "+doctor.getSurname());
+        //name.setText(doctor.getName()+" "+doctor.getSurname());
         name.setEnabled(false); //Doesnt allow editing
         email = new MyTextField();
-        email.setText(doctor.getEmail());
+        //email.setText(doctor.getEmail());
         email.setEnabled(false);
         phoneNumber = new MyTextField();
-        phoneNumber.setText(doctor.getPhoneNumber().toString());
+        //phoneNumber.setText(doctor.getPhoneNumber().toString());
         phoneNumber.setEnabled(false);
         speciality = new MyTextField();
-        speciality.setText(doctor.getSpeciality());
+        //speciality.setText(doctor.getSpeciality());
         speciality.setEnabled(false);
         office = new MyTextField();
-        office.setText(doctor.getDepartment());
+        //office.setText(doctor.getDepartment());
         office.setEnabled(false);
         formContainer = new JPanel();
         initDoctorForm();
@@ -158,7 +158,25 @@ public class DoctorInfo extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == goBackButton) {
+            resetView();
             appMain.changeToMainMenu();
         }
+    }
+
+    private void resetView() {
+        name.setText("");
+        email.setText("");
+        phoneNumber.setText("");
+        speciality.setText("");
+        office.setText("");
+        //doctor = null;
+    }
+
+    public void updateView(Doctor doctor) {
+        name.setText(doctor.getName()+" "+doctor.getSurname());
+        email.setText(doctor.getEmail());
+        phoneNumber.setText(doctor.getPhoneNumber().toString());
+        speciality.setText(doctor.getSpeciality());
+        office.setText(doctor.getDepartment());
     }
 }

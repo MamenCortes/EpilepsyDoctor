@@ -1,6 +1,8 @@
 package network;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import pojos.Doctor;
 import pojos.Patient;
@@ -9,9 +11,7 @@ import ui.windows.Application;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -126,10 +126,30 @@ public class Client {
             if(role.equals("Doctor")){
                 User user = new User(id, email, password, role);
                 appMain.user = user;
-                Doctor doctor = Doctor.fromJason(response.getAsJsonObject("doctor"));
-                System.out.println(doctor);
-                appMain.doctor = doctor;
-                return true;
+
+                //Request doctor data
+                message.clear();
+                data.clear();
+                message.put("type", "REQUEST_DOCTOR_BY_EMAIL");
+                data.put("user_id", user.getId());
+                data.put("email", user.getEmail());
+                message.put("data", data);
+
+                jsonMessage = gson.toJson(message);
+                out.println(jsonMessage); // send JSON message
+
+                // Read the response
+                responseLine = in.readLine();
+                response = gson.fromJson(responseLine, JsonObject.class);
+                // Check response
+                status = response.get("status").getAsString();
+                if (status.equals("SUCCESS")) {
+                    Doctor doctor = Doctor.fromJason(response.getAsJsonObject("doctor"));
+                    System.out.println(doctor);
+                    appMain.doctor = doctor;
+                    return true;
+                }
+                return false;
             }else{
                 return false;
             }
@@ -148,6 +168,35 @@ public class Client {
         System.out.println("Sent: " + jsonMessage);
         //out.println("stop");
         releaseResources(out, socket);
+    }
+
+    public List<Patient> getPatientsFromDoctor(int doctor_id) throws IOException {
+        Map<String, Object> data = new HashMap<>();
+        data.put("doctor_id", doctor_id);
+        data.put("user_id", appMain.user.getId());
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "REQUEST_PATIENTS_FROM_DOCTOR");
+        message.put("data", data);
+
+        String jsonMessage = gson.toJson(message);
+        out.println(jsonMessage); // send JSON message
+
+        String line = in.readLine();
+        JsonObject response = gson.fromJson(line, JsonObject.class);
+        List<Patient> patients = new ArrayList<>();
+
+        String status = response.get("status").getAsString();
+        if (status.equals("SUCCESS")) {
+            JsonArray data_response = response.getAsJsonArray("patients");
+
+            for (JsonElement element : data_response) {
+                patients.add(Patient.fromJson(element.getAsJsonObject()));
+            }
+
+            System.out.println("Received " + patients.size() + " patients.");
+        }
+        return patients;
     }
 
     public static void main(String args[]) throws IOException {

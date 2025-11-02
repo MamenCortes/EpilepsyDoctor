@@ -127,7 +127,7 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
     protected void showPatients(List<Patient> patients) {
 
         //JPanel gridPanel = new JPanel(new GridLayout(patients.size(), 0));
-        JScrollPane scrollPane1 = new JScrollPane();
+        scrollPane1 = new JScrollPane();
         scrollPane1.setOpaque(false);
         scrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         //scrollPane1.setViewportView(gridPanel);
@@ -139,8 +139,6 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
 
             }
         }
-
-
         patientsList = new JList<Patient>(patientsDefListModel);
         patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         patientsList.setCellRenderer(new PatientCell());
@@ -150,6 +148,22 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         scrollPane1.setPreferredSize(this.getPreferredSize());
 
         add(scrollPane1,  "cell 2 1 2 6, grow, gap 10");
+    }
+
+    public void updatePatients(List<Patient> patients) {
+        if(patients == null || patients.isEmpty()) {showErrorMessage("No patients found!");}
+        patientsDefListModel = new DefaultListModel<Patient>();
+        if(patients != null) {
+            for (Patient r : patients) {
+                patientsDefListModel.addElement(r);
+
+            }
+        }
+        patientsList = new JList<Patient>(patientsDefListModel);
+        patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        patientsList.setCellRenderer(new PatientCell());
+        patientsList.addMouseListener(this);
+        scrollPane1.setViewportView(patientsList);
     }
 
     private void showErrorMessage(String message) {
@@ -169,6 +183,7 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
 
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == goBackButton) {
+            resetPanel();
             appMain.changeToMainMenu();
         }else if(e.getSource() == openFormButton){
             Patient patient = patientsList.getSelectedValue();
