@@ -51,7 +51,7 @@ public class Client {
             System.out.println("Received from server: " + received);
             //requestPatient();
         }else if(message.equals("get_doctor")){
-            requestDoctorInfo();
+            //requestDoctorInfo();
         }else if(message.contains("LOGIN")){
             out.println(message);
             String received = in.readLine(); // read one line (the Patient string)
@@ -59,41 +59,6 @@ public class Client {
         }
         else {
         out.println(message);}
-    }
-
-    public void requestPatient() throws IOException {
-        String message = "get_patient";
-        out.println(message);
-
-        String received = in.readLine(); // read one line (the Patient string)
-        System.out.println("Received from server: " + received);
-    }
-
-    public void requestDoctorInfo() throws IOException {
-        String message = "get_doctor";
-        out.println(message);
-
-        String received = in.readLine(); // read one line (the Patient string)
-        System.out.println("Received from server: " + received);
-    }
-
-    public boolean requestLogin(String email, String password) throws IOException {
-        String message = "LOGIN;" + email + ";" + password;
-        out.println(message);
-
-        String response = in.readLine();
-        if (response == null) return false;
-
-        if (response.startsWith("LOGIN_SUCCESS;")) {
-            String userData = response.substring("LOGIN_SUCCESS;".length());
-            System.out.println("Logged in as: " + userData);
-            return true;
-        } else if (response.startsWith("LOGIN_FAIL;")) {
-            String reason = response.substring("LOGIN_FAIL;".length());
-            System.out.println("Login failed: " + reason);
-            return false;
-        }
-        return false;
     }
 
     public boolean login(String email, String password) throws IOException {
@@ -191,7 +156,7 @@ public class Client {
             JsonArray data_response = response.getAsJsonArray("patients");
 
             for (JsonElement element : data_response) {
-                patients.add(Patient.fromJson(element.getAsJsonObject()));
+                patients.add(Patient.fromJason(element.getAsJsonObject()));
             }
 
             System.out.println("Received " + patients.size() + " patients.");

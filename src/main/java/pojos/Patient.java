@@ -131,7 +131,7 @@ public class Patient {
         return recordings;
     }
 
-    public static Patient fromJson(JsonObject jason) {
+    public static Patient fromJason(JsonObject jason) {
         Patient patient = new Patient();
         patient.setId(jason.get("id").getAsInt());
         patient.setName(jason.get("name").getAsString());
