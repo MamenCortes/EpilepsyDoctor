@@ -22,8 +22,12 @@ public class Client {
     private Application appMain;
     private Gson gson = new Gson();
 
-    public Client(String ip, int port, Application appMain) {
+    public Client(Application appMain) {
         this.appMain = appMain;
+    }
+
+    public Boolean connect(String ip, int port) {
+
         try {
             //socket = new Socket("localhost", 9009);
             socket = new Socket(ip, port);
@@ -32,8 +36,19 @@ public class Client {
                     new InputStreamReader(socket.getInputStream())
             );
             sendInitialMessage();
+            return true;
         }catch(IOException e){
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, e);
+            return false;
+        }
+
+    }
+
+    public Boolean isConnected(){
+        if(socket == null){
+            return false;
+        }else {
+            return socket.isConnected();
         }
     }
 
@@ -72,9 +87,12 @@ public class Client {
         message.put("type", "LOGIN_REQUEST");
         message.put("data", data);
 
+        /*{type: LOGIN_REQUEST
+        * data: {email: email@.., password: passr}*/
+
         String jsonMessage = gson.toJson(message);
         out.println(jsonMessage); // send JSON message
-
+        System.out.println(jsonMessage);
         // Read the response
         String responseLine = in.readLine();
         JsonObject response = gson.fromJson(responseLine, JsonObject.class);
@@ -106,6 +124,7 @@ public class Client {
                 // Read the response
                 responseLine = in.readLine();
                 response = gson.fromJson(responseLine, JsonObject.class);
+                System.out.println(responseLine);
                 // Check response
                 status = response.get("status").getAsString();
                 if (status.equals("SUCCESS")) {
@@ -171,7 +190,8 @@ public class Client {
         System.out.println("Connection established... sending text");*/
 
         //"localhost", 9009
-        Client client = new Client("localhost", 9009, new Application());
+        //Client client = new Client("localhost", 9009, new Application());
+        Client client = new Client(new Application());
 
 
         Scanner scanner = new Scanner(System.in); // create a Scanner for console input

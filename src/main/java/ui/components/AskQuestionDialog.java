@@ -9,9 +9,9 @@ public class AskQuestionDialog extends JPanel {
     private JLabel errorMessage;
 
     public AskQuestionDialog(MyTextField ipTextField, MyButton okbutton, MyButton cancelbutton) {
-        this.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]25[]push"));
+        this.setLayout(new MigLayout("wrap, fill, inset 20", "push[center]push", "push[]25[]10[]20[]push"));
         JLabel label = new JLabel("Introduce server IP Address:");
-        label.setFont(new Font("sansserif", 1, 30));
+        label.setFont(new Font("sansserif", 1, 25));
         label.setForeground(Application.dark_purple);
         this.add(label);
 
@@ -29,11 +29,11 @@ public class AskQuestionDialog extends JPanel {
 
 
         MyButton okButton = okbutton;
-        okButton.setText("Save");
+        //okButton.setText("OK");
         okButton.setBackground(Application.turquoise);
         okButton.setForeground(new Color(250, 250, 250));
         MyButton cancelButton = cancelbutton;
-        cancelButton.setText("Cancel");
+        //cancelButton.setText("CANCEL");
         cancelButton.setBackground(Application.turquoise);
         cancelButton.setForeground(new Color(250, 250, 250));
 

@@ -6,11 +6,13 @@ import pojos.Doctor;
 import pojos.Patient;
 import pojos.User;
 import ui.ECGFileReader;
-import ui.components.SignalGraphPanel;
+import ui.components.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -45,7 +47,8 @@ public class Application extends JFrame {
 
     public static void main(String[] args) {
         Application app = new Application();
-        app.setVisible(true);
+        app.showDialogIntroduceIP(app);
+        //app.setVisible(true);
     }
     public Application() {
         appPanels = new ArrayList<JPanel>();
@@ -56,7 +59,7 @@ public class Application extends JFrame {
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        client = new Client(serverIPAdress, serverPort, this);
+        client = new Client(this);
         //initGraph();
         setContentPane(logInPanel);
         //changeToMainMenu();
@@ -106,7 +109,7 @@ public class Application extends JFrame {
     }
 
     private void stopEverything(){
-        if(client != null){
+        if(client != null && client.isConnected()){
             client.stopClient();
         }
         dispose();
@@ -176,5 +179,54 @@ public class Application extends JFrame {
         }
 
         return colorMap;
+    }
+
+    private void showDialogIntroduceIP(JFrame parentFrame) {
+        MyTextField ipTextField = new MyTextField();
+        MyButton okButton = new MyButton("OK");
+        MyButton cancelButton = new MyButton("Cancel");
+
+        AskQuestionDialog askForIP = new AskQuestionDialog(ipTextField, okButton, cancelButton);
+        askForIP.setBackground(Color.white);
+        askForIP.setPreferredSize(new Dimension(400, 300));
+
+        JDialog dialog = new JDialog(parentFrame, "Server IP", true);
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.getContentPane().add(askForIP);
+        dialog.getContentPane().setBackground(Color.white);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+        //dialog.setSize(400, 200);
+
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String ip = ipTextField.getText();
+                if(ip != null && !ip.isBlank()) {
+                    try {
+                        if (client.connect(ip, serverPort)) {
+                            parentFrame.setVisible(true);
+                            dialog.dispose();
+                        } else {
+                            askForIP.showErrorMessage("Server IP Error");
+                        }
+                    }catch (Exception ex) {
+                        askForIP.showErrorMessage("Could not connect to server");
+                    }
+                }else{
+                    askForIP.showErrorMessage("Please enter an IP Address");
+                }
+            }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+                stopEverything();
+            }
+        });
+
+        dialog.setVisible(true);
     }
 }
