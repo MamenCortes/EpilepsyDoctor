@@ -6,9 +6,7 @@ public class Signal {
     private int id;
     private Integer frequency;
     private double[] ecg;
-    private String accx;
-    private String accy;
-    private String accz;
+    private double[] acc;
     private String timestamp;
     private String comments;
     private LocalDate date;
@@ -18,16 +16,14 @@ public class Signal {
         ecg = new double[0];
     }
 
-    public Signal(LocalDate date, Integer frequency, double[] ecg, String accx, String accy, String accz, String timestamp, String comments, int reportId) {
+    public Signal(LocalDate date, Integer frequency, double[] ecg, double[] acc, String timestamp, String comments, int reportId) {
         this.id = id;
         this.frequency = frequency;
         this.ecg = ecg;
         this.timestamp = timestamp;
         this.comments = comments;
         this.reportId = reportId;
-        this.accx = accx;
-        this.accy = accy;
-        this.accz = accz;
+        this.acc = acc;
         this.date = date;
     }
 
@@ -62,28 +58,12 @@ public class Signal {
                 '}';
     }
 
-    public String getAccx() {
-        return accx;
+    public double[] getAcc() {
+        return acc;
     }
 
-    public void setAccx(String accx) {
-        this.accx = accx;
-    }
-
-    public String getAccy() {
-        return accy;
-    }
-
-    public void setAccy(String accy) {
-        this.accy = accy;
-    }
-
-    public String getAccz() {
-        return accz;
-    }
-
-    public void setAccz(String accz) {
-        this.accz = accz;
+    public void setAcc(double[] accx) {
+        this.acc = accx;
     }
 
     public LocalDate getDate() {

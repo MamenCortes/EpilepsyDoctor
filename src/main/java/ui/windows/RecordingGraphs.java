@@ -12,10 +12,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 
 public class RecordingGraphs extends JPanel implements ActionListener, MouseListener {
     private Application appMain;
     private PatientInfo parentPanel;
+    private Patient patient;
     private Signal signal;
     private final Font titleFont = new Font("sansserif", 3, 15);
     private final Color titleColor = Application.dark_purple;
@@ -35,11 +37,12 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
     private JButton accButton;
     private JTextArea commentsTextArea;
 
-    public RecordingGraphs(Application appMain, PatientInfo parentPanel, Signal signal, String patientName) {
+    public RecordingGraphs(Application appMain, PatientInfo parentPanel, Signal signal, Patient patient) {
         this.appMain = appMain;
         this.signal = signal;
         this.parentPanel = parentPanel;
-        titleText = patientName+"'s Recording "+signal.getDate().toString();
+        this.patient = patient;
+        titleText = patient.getName()+" "+patient.getSurname()+"'s Recording "+signal.getDate().toString();
         initMainPanel();
     }
 
@@ -79,7 +82,7 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
         ecgGraph = new SignalGraphPanel(signal.getEcg(), signal.getFrequency(), "ECG Signal");
         //add(ecgGraph, "cell 0 1 3 3, alignx left");
 
-        accGraph = new SignalGraphPanel(signal.getEcg(), signal.getFrequency(), "ACC Signal");
+        accGraph = new SignalGraphPanel(signal.getAcc(), signal.getFrequency(), "ACC Signal");
         //add(accGraph, "cell 0 5 3 3, alignx left");
 
         cardPanel.add(ecgGraph, "Panel1");
@@ -102,11 +105,30 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
         errorMessage.setVisible(false);
     }
 
+    private void saveComments() throws IOException {
+        String comments = commentsTextArea.getText();
+        if(!signal.getComments().equals(comments)){
+            signal.setComments(comments);
+            appMain.client.saveComments(patient.getId(), signal);
+        }
+    }
+
+    private void showErrorMessage(String message) {
+        errorMessage.setVisible(true);
+        errorMessage.setText(message);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == goBackButton) {
-            appMain.changeToPanel(parentPanel);
-            //TODO: Save comments in signal
+            try {
+                //TODO: Save comments in signal
+                saveComments();
+                appMain.changeToPanel(parentPanel);
+            }catch(IOException ex){
+                //TODO: show popUp dialog asking if you are sure you eant to go back without saving
+                showErrorMessage("Error saving comments");
+            }
             //TODO: Reset view
             //And delete this one
         }else if (e.getSource() == accButton) {

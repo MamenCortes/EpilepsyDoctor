@@ -72,6 +72,7 @@ public class Application extends JFrame {
     public static double[] importECG() {
         String filePath = "C:/path/to/record.txt";
         filePath = "C:\\Users\\mamen\\OneDrive - Fundación Universitaria San Pablo CEU\\06_BecaPregrado\\2023-2024\\Prototipo_registros\\Prototipo_Day1_2024-02-01_11-20-02.txt";
+        filePath = "C:/Users/mamen/Documents/OpenSignals (r)evolution/files/ecg-acc-mamen-11-07_12-12-54.txt";
         try {
             String date = "2024-02-01";
             int samplingFrequency = 1000; // Adjusted sampling rate = 10 Hz
@@ -88,6 +89,22 @@ public class Application extends JFrame {
             return null;
         }
     }
+
+    public static double[] importACC() {
+        String filePath = "C:/path/to/record.txt";
+        filePath = "C:\\Users\\mamen\\OneDrive - Fundación Universitaria San Pablo CEU\\06_BecaPregrado\\2023-2024\\Prototipo_registros\\Prototipo_Day1_2024-02-01_11-20-02.txt";
+        filePath = "C:/Users/mamen/Documents/OpenSignals (r)evolution/files/ecg-acc-mamen-11-07_12-12-54.txt";
+        try {
+            double[] ecg = ECGFileReader.readECGFromFile(filePath);
+            System.out.println("Loaded " + ecg.length + " samples.");
+            return ecg;
+
+        }catch (IOException e){
+            System.out.println("Error reading file");
+            return null;
+        }
+    }
+
     public void initComponents() {
         setTitle("Doctor Application");
         //setSize(602, 436);

@@ -4,6 +4,7 @@ import net.miginfocom.swing.MigLayout;
 import pojos.Patient;
 import pojos.Report;
 import pojos.Signal;
+import ui.ECGFileReader;
 import ui.components.MyButton;
 import ui.components.MyComboBox;
 import ui.components.MyTextField;
@@ -17,12 +18,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class PatientInfo extends JPanel implements ActionListener, MouseListener {
     private static final long serialVersionUID = -2213334704230710767L;
@@ -35,8 +39,6 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
     protected JLabel title;
     protected String titleText;
     protected ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/patient-info64-2.png"));
-    protected JScrollPane scrollPane1;
-    protected String searchText = "Search By Surname";
     protected MyTextField searchByTextField;
     protected MyButton patientDetailsButton;
     protected MyButton recordingsHistoryButton;
@@ -56,9 +58,6 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
     private JTable table;
     private JPanel legendPanel;
     private MyComboBox<String> monthComboBox;
-    //protected Application appMain;
-    protected JList<Patient> patientsList;
-    protected DefaultListModel<Patient> patientsDefListModel;
     private final Patient patient;
 
     //TODO: implement search algorithms
@@ -244,6 +243,7 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         //scrollPane1.setViewportView(gridPanel);
 
         recordingsDefListModel = new DefaultListModel<Signal>();
+        //TODO: ask server for recordings
         ArrayList<Signal> signalRecordings = patient.getRecordings();
         if(!signalRecordings.isEmpty()) {
             for (Signal r : signalRecordings) {
@@ -260,9 +260,20 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
 
         scrollPane1.setPreferredSize(this.getPreferredSize());
         recordingsHistoryPanel.add(scrollPane1, "cell 0 3, span 2 2, grow");
+    }
 
-        //add(reportsHistoryPanel, "cell 1 1, span 1 7, grow");
-        //reportsHistoryPanel.setVisible(false);
+    public void updateSignalRecordingsList(List<Signal> list){
+        if(list == null || list.isEmpty()) {
+            showErrorMessage("No signal found!");
+            openRecordingButton.setVisible(false);
+        }else{
+            openRecordingButton.setVisible(true);
+        }
+        recordingsDefListModel.removeAllElements();
+        for (Signal r : list) {
+            recordingsDefListModel.addElement(r);
+
+        }
     }
 
     private void initSymptomsCalendarPanel() {
@@ -467,38 +478,39 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             if(signal == null) {
                 showErrorMessage("No signal Selected");
             }else {
-                showErrorMessage("Selected signal: " + patient.getName()+" "+patient.getSurname());
+                //showErrorMessage("Selected signal: " + patient.getName()+" "+patient.getSurname());
                 //TODO: request real signal to the server si no se ha pedido ya
-                signal.setEcg(Application.importECG());
+                //signal.setEcg(Application.importECG());
+                //signal.setAcc(Application.importACC());
+                //signal.setFrequency(100);
+                try {
+                    Signal temp = ECGFileReader.readSignalFromFile("C:/Users/mamen/Documents/OpenSignals (r)evolution/files/ecg-acc-mamen-11-07_12-12-54.txt");
+                    signal.setEcg(temp.getEcg());
+                    signal.setAcc(temp.getAcc());
+                    signal.setFrequency(temp.getFrequency());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
                 //resetPanel();
-                appMain.changeToPanel(new RecordingGraphs(appMain, this, signal, titleText));
+                appMain.changeToPanel(new RecordingGraphs(appMain, this, signal, patient));
                 //appMain.changeToAdmitPatient(patient);
             }
-        }
-        /*if(e.getSource() == searchButton) {
+        }if(e.getSource() == searchButton) {
             errorMessage.setVisible(false);
             String input = searchByTextField.getText();
             System.out.println(input);
-            List<Patient> patients = appMain.conMan.getPatientMan().searchPatientsBySurname(input);
-            updatePatientDefModel(patients);
-            if(patients.isEmpty()) {
-                showErrorMessage("No patient found");
-            }else {
-                openFormButton.setVisible(true);
-            }
+            List<Signal> filteredRecordings = patient.getRecordings().stream()
+                    .filter(p -> p.getDate().toString().contains(input))
+                    .collect(Collectors.toList());
 
-        }else if(e.getSource() == openFormButton){
-            Patient patient = patientList.getSelectedValue();
-            if(patient == null) {
-                showErrorMessage("No patient Selected");
+            updateSignalRecordingsList(filteredRecordings);
+            if(filteredRecordings.isEmpty()) {
+                showErrorMessage("No Signals found");
+                openRecordingButton.setVisible(false);
             }else {
-                resetPanel();
-                appMain.changeToAdmitPatient(patient);
+                openRecordingButton.setVisible(true);
             }
-        }else if(e.getSource() == cancelButton){
-            resetPanel();
-            appMain.changeToRecepcionistMenu();
-        }*/
+        }
 
     }
 

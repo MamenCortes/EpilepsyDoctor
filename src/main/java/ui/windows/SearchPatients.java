@@ -9,9 +9,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+
 import net.miginfocom.swing.MigLayout;
 import pojos.Patient;
-import ui.RandomData;
 import ui.components.MyButton;
 import ui.components.MyTextField;
 import ui.components.PatientCell;
@@ -30,22 +31,23 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
     protected String searchText = "Search By Surname";
     protected MyTextField searchByTextField;
     protected MyButton searchButton;
-    protected MyButton cancelButton;
+    protected MyButton resetListButton;
     protected MyButton openFormButton;
     protected JLabel errorMessage;
     protected MyButton goBackButton;
     //protected Application appMain;
-    protected JList<Patient> patientsList;
+    protected JList<Patient> patientJList;
     protected DefaultListModel<Patient> patientsDefListModel;
+    protected List<Patient> allPatients;
 
     public SearchPatients(Application appMain) {
         this.appMain = appMain;
         initMainPanel();
-        List<Patient> patients = new ArrayList<>();
+        /*List<Patient> patients = new ArrayList<>();
         for(int i = 0; i < 10; i++) {
             patients.add(RandomData.generateRandomPatient());
         }
-        showPatients(patients);
+        showPatients(patients);*/
         //showPatients(null);
     }
 
@@ -89,15 +91,15 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
 
         searchByTextField = new MyTextField("ex. Doe...");
         searchByTextField.setBackground(Application.lighter_turquoise);
-        searchByTextField.setHint("YYYY-MM-DD");
+        searchByTextField.setHint("ex. Doe");
         add(searchByTextField, "cell 0 2 2 1, alignx center, grow");
 
         //cancelButton = new MyButton("CANCEL", Application.turquoise, Color.white);
-        cancelButton = new MyButton("CANCEL");
+        resetListButton = new MyButton("RESET");
         //cancelButton.setBackground(new Color(7, 164, 121));
         //cancelButton.setForeground(new Color(250, 250, 250));
-        cancelButton.addActionListener(this);
-        add(cancelButton, "cell 0 3, left, gapy 5, grow");
+        resetListButton.addActionListener(this);
+        add(resetListButton, "cell 0 3, left, gapy 5, grow");
 
         searchButton = new MyButton("SEARCH");
         searchButton.addActionListener(this);
@@ -120,12 +122,6 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         this.add(errorMessage, "cell 0 5, span 2, left");
         errorMessage.setVisible(false);
 
-        //showPatients(appMain.patientMan.searchPatientsBySurname("Blanco"));
-        //showDoctors(createRandomDoctors());
-    }
-    //TODO: Change for patient cell
-    protected void showPatients(List<Patient> patients) {
-
         //JPanel gridPanel = new JPanel(new GridLayout(patients.size(), 0));
         scrollPane1 = new JScrollPane();
         scrollPane1.setOpaque(false);
@@ -133,37 +129,33 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         //scrollPane1.setViewportView(gridPanel);
 
         patientsDefListModel = new DefaultListModel<Patient>();
-        if(patients != null) {
-            for (Patient r : patients) {
-                patientsDefListModel.addElement(r);
-
-            }
-        }
-        patientsList = new JList<Patient>(patientsDefListModel);
-        patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        patientsList.setCellRenderer(new PatientCell());
-        patientsList.addMouseListener(this);
-        scrollPane1.setViewportView(patientsList);
+        patientJList = new JList<Patient>(patientsDefListModel);
+        patientJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        patientJList.setCellRenderer(new PatientCell());
+        patientJList.addMouseListener(this);
+        scrollPane1.setViewportView(patientJList);
 
         scrollPane1.setPreferredSize(this.getPreferredSize());
 
         add(scrollPane1,  "cell 2 1 2 6, grow, gap 10");
     }
 
-    public void updatePatients(List<Patient> patients) {
-        if(patients == null || patients.isEmpty()) {showErrorMessage("No patients found!");}
-        patientsDefListModel = new DefaultListModel<Patient>();
-        if(patients != null) {
-            for (Patient r : patients) {
-                patientsDefListModel.addElement(r);
-
+    protected void updatePatientDefModel(List<Patient> patients) {
+        if(patients == null || patients.isEmpty()) {
+            showErrorMessage("No patients found!");
+            openFormButton.setVisible(false);
+        }else{
+            if(allPatients == null) {
+                allPatients = patients;
             }
+            openFormButton.setVisible(true);
         }
-        patientsList = new JList<Patient>(patientsDefListModel);
-        patientsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        patientsList.setCellRenderer(new PatientCell());
-        patientsList.addMouseListener(this);
-        scrollPane1.setViewportView(patientsList);
+
+        patientsDefListModel.removeAllElements();
+        for (Patient r : patients) {
+            patientsDefListModel.addElement(r);
+
+        }
     }
 
     private void showErrorMessage(String message) {
@@ -179,6 +171,8 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         //TODO: reset panel when going back to menu
         hideErrorMessage();
         searchByTextField.setText("");
+        allPatients = null;
+        patientsDefListModel.clear();
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -186,40 +180,41 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
             resetPanel();
             appMain.changeToMainMenu();
         }else if(e.getSource() == openFormButton){
-            Patient patient = patientsList.getSelectedValue();
+            Patient patient = patientJList.getSelectedValue();
             if(patient == null) {
                 showErrorMessage("No patient Selected");
             }else {
                 showErrorMessage("Selected patient: " + patient.getName()+" "+patient.getSurname());
                 resetPanel();
                 appMain.changeToPanel(new PatientInfo(appMain, patient));
-                //appMain.changeToAdmitPatient(patient);
             }
-        }
-        /*if(e.getSource() == searchButton) {
+        }if(e.getSource() == searchButton) {
             errorMessage.setVisible(false);
             String input = searchByTextField.getText();
             System.out.println(input);
-            List<Patient> patients = appMain.conMan.getPatientMan().searchPatientsBySurname(input);
-            updatePatientDefModel(patients);
-            if(patients.isEmpty()) {
+            String search = searchByTextField.getText().trim().toLowerCase();
+
+            List<Patient> filteredPatients = allPatients.stream()
+                    .filter(p -> p.getSurname().toLowerCase().contains(search))
+                    .collect(Collectors.toList());
+
+            updatePatientDefModel(filteredPatients);
+            if(filteredPatients.isEmpty()) {
                 showErrorMessage("No patient found");
+                openFormButton.setVisible(false);
             }else {
                 openFormButton.setVisible(true);
             }
 
-        }else if(e.getSource() == openFormButton){
-            Patient patient = patientList.getSelectedValue();
-            if(patient == null) {
-                showErrorMessage("No patient Selected");
+        }else if(e.getSource() == resetListButton){
+            updatePatientDefModel(allPatients);
+            if(allPatients.isEmpty()) {
+                showErrorMessage("No patient found");
+                openFormButton.setVisible(false);
             }else {
-                resetPanel();
-                appMain.changeToAdmitPatient(patient);
+                openFormButton.setVisible(true);
             }
-        }else if(e.getSource() == cancelButton){
-            resetPanel();
-            appMain.changeToRecepcionistMenu();
-        }*/
+        }
 
     }
 

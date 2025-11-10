@@ -66,7 +66,7 @@ public class MainMenu extends MenuTemplate {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
-            searchPatientsPanel.updatePatients(patients);
+            searchPatientsPanel.updatePatientDefModel(patients);
             appMenu.changeToPanel(searchPatientsPanel);
         }else if(e.getSource()== logOutBt) {
             appMenu.doctor = null;

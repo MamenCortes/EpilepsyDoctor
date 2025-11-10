@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import pojos.Doctor;
 import pojos.Patient;
+import pojos.Signal;
 import pojos.User;
 import ui.windows.Application;
 
@@ -57,31 +58,13 @@ public class Client {
         out.println("Hi! I'm a new client!\n");
     }
 
-    private void sendMessage(String message) throws IOException {
-        if(message.equals("stop")){
-            stopClient();
-        }else if(message.equals("get_patient")){
-            out.println(message);
-            String received = in.readLine(); // read one line (the Patient string)
-            System.out.println("Received from server: " + received);
-            //requestPatient();
-        }else if(message.equals("get_doctor")){
-            //requestDoctorInfo();
-        }else if(message.contains("LOGIN")){
-            out.println(message);
-            String received = in.readLine(); // read one line (the Patient string)
-            System.out.println("Received from server: " + received);
-        }
-        else {
-        out.println(message);}
-    }
-
     public boolean login(String email, String password) throws IOException {
         //String message = "LOGIN;" + email + ";" + password;
 
         Map<String, Object> data = new HashMap<>();
         data.put("email", email);
         data.put("password", password);
+        data.put("access_permits", "Doctor");
 
         Map<String, Object> message = new HashMap<>();
         message.put("type", "LOGIN_REQUEST");
@@ -100,7 +83,7 @@ public class Client {
         // Check response
         String status = response.get("status").getAsString();
         if (status.equals("SUCCESS")) {
-            JsonObject userJson = response.getAsJsonObject("user");
+            JsonObject userJson = response.getAsJsonObject("data");
             int id = userJson.get("id").getAsInt();
             String role = userJson.get("role").getAsString();
             System.out.println("Login successful!");
@@ -183,6 +166,32 @@ public class Client {
         return patients;
     }
 
+    public void saveComments(Integer patient_id, Signal signal) throws IOException {
+        System.out.println("Saving comments for patient " + patient_id);
+        Map<String, Object> data = new HashMap<>();
+        data.put("patient_id", patient_id);
+        data.put("signal_id", signal.getId());
+        data.put("comments", signal.getComments());
+        data.put("user_id", appMain.user.getId());
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "SAVE_COMMENTS_SIGNAL");
+        message.put("data", data);
+
+        String jsonMessage = gson.toJson(message);
+        out.println(jsonMessage);
+        System.out.println("Sent: " + jsonMessage);
+
+        //wait for response
+        String line = in.readLine();
+        JsonObject response = gson.fromJson(line, JsonObject.class);
+        String status = response.get("status").getAsString();
+        System.out.println(response.get("status").getAsString());
+        if (!status.equals("SUCCESS")) {
+            throw new IOException();
+        }
+    }
+
     public static void main(String args[]) throws IOException {
         System.out.println("Starting Client...");
         /*Socket socket = new Socket("localhost", 9009); //localhost refers to your own computer
@@ -201,7 +210,7 @@ public class Client {
         while (true) {
             name = scanner.nextLine();
             //And send it to the server
-            client.sendMessage(name);
+            //client.sendMessage(name);
             if(name.equals("stop")){
                 scanner.close();
                 break;

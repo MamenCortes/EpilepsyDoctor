@@ -9,18 +9,22 @@ import net.miginfocom.swing.MigLayout;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import ui.ECGFileReader;
 import ui.windows.Application;
 
 public class SignalGraphPanel extends JPanel {
     private TimeSeries ecgSeries;
-    private int windowSize = 10000;  // show 10,000 samples (~10s at 1kHz)
+    private int windowSize = 1000;  // show 10,000 samples (~10s at 1kHz)
     private int currentIndex = 0;
+    private int sf;
     private double[] fullData;
     private final Font titleFont = new Font("sansserif", 3, 15);
     private final Color titleColor = Application.dark_purple;
@@ -29,11 +33,12 @@ public class SignalGraphPanel extends JPanel {
     private ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/ekg-monitor64_02.png"));
 
     public SignalGraphPanel(double[] rawData, int samplingFrequency, String title) {
-        double[] trimmedECG = skipFirstMinute(rawData, samplingFrequency);
-        System.out.println("Cut to " + trimmedECG.length + " samples.");
+        //double[] trimmedECG = skipFirstMinute(rawData, samplingFrequency);
+        //System.out.println("Cut to " + trimmedECG.length + " samples.");
 
+        sf = samplingFrequency;
         //Process the signal: center and normalize
-        this.fullData = preprocessSignal(trimmedECG);
+        this.fullData = preprocessSignal(rawData);
         System.out.println("Signal Preprocessed");
 
         this.setLayout(new MigLayout("fill, inset 20, gap 0, wrap 3", "[]", "[95%][5%]"));
@@ -52,6 +57,9 @@ public class SignalGraphPanel extends JPanel {
         rangeAxis.setAutoRange(false); // desactiva que el eje se ajuste automáticamente
         rangeAxis.setRange(-1, 1);
 
+        DateAxis domainAxis = (DateAxis) plot.getDomainAxis();
+        domainAxis.setDateFormatOverride(new java.text.SimpleDateFormat("s.S")); // show seconds.milliseconds
+        domainAxis.setLabel("Time (s)");
 
         // initial window
         updateWindow(0, windowSize);
@@ -85,10 +93,20 @@ public class SignalGraphPanel extends JPanel {
         setVisible(true);
     }
 
-    private void updateWindow(int start, int end) {
+    /*private void updateWindow(int start, int end) {
         ecgSeries.clear();
         for (int i = start; i < end && i < fullData.length; i++) {
             ecgSeries.addOrUpdate(new Millisecond(new Date(i)), fullData[i]);
+        }
+    }*/
+
+    private void updateWindow(int start, int end) {
+        ecgSeries.clear();
+        double msPerSample = 1000.0 / sf;  // 10 ms per sample for 100 Hz
+
+        for (int i = start; i < end && i < fullData.length; i++) {
+            long timeMillis = Math.round(i * msPerSample);
+            ecgSeries.addOrUpdate(new Millisecond(new Date(timeMillis)), fullData[i]);
         }
     }
 
