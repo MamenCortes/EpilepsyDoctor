@@ -6,7 +6,10 @@ import ui.windows.Application;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-
+/**
+ * List cell renderer for displaying recording information from a {@link Signal}.
+ * It formats date and comments using a two-column MigLayout.
+ */
 public class RecordingCell implements ListCellRenderer<Signal> {
 
     private final Color titleColor = Application.turquoise;
@@ -15,7 +18,16 @@ public class RecordingCell implements ListCellRenderer<Signal> {
     private final Color contentColor = new Color(122, 140, 141);
     //private Color backgroundColor = new Color(230, 245, 241);
 
-
+    /**
+     * Returns a component used to render a recording entry in the list.
+     *
+     * @param list the list containing the cell
+     * @param value the signal object representing a recording
+     * @param index the index of the cell in the list
+     * @param isSelected whether the cell is selected
+     * @param cellHasFocus whether the cell has focus
+     * @return the component used for rendering the recording cell
+     */
     @Override
     public Component getListCellRendererComponent(JList<? extends Signal> list, Signal value, int index,
                                                   boolean isSelected, boolean cellHasFocus) {

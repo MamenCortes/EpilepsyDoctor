@@ -19,7 +19,12 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import ui.ECGFileReader;
 import ui.windows.Application;
-
+/**
+ * A panel that displays a biosignal over time using a scrolling
+ * time–series graph. The panel preprocesses the raw signal, initializes a
+ * JFreeChart time-series plot, and provides navigation controls to scroll
+ * through the signal window.
+ */
 public class SignalGraphPanel extends JPanel {
     private TimeSeries ecgSeries;
     private int windowSize = 1000;  // show 10,000 samples (~10s at 1kHz)
@@ -31,11 +36,16 @@ public class SignalGraphPanel extends JPanel {
     private final Font contentFont = new Font("sansserif", 1, 12);
     private final Color contentColor = Application.dark_turquoise;
     private ImageIcon icon  = new ImageIcon(getClass().getResource("/icons/ekg-monitor64_02.png"));
-
+    /**
+     * Creates a new graph panel for displaying a time–series physiological signal.
+     * The signal is preprocessed (centered and normalized), displayed in a
+     * time–windowed chart, and presented with navigation buttons to scroll the data.
+     *
+     * @param rawData the raw signal samples
+     * @param samplingFrequency the sampling frequency of the signal in Hz
+     * @param title the title to display on the chart
+     */
     public SignalGraphPanel(double[] rawData, int samplingFrequency, String title) {
-        //double[] trimmedECG = skipFirstMinute(rawData, samplingFrequency);
-        //System.out.println("Cut to " + trimmedECG.length + " samples.");
-
         sf = samplingFrequency;
         //Process the signal: center and normalize
         this.fullData = preprocessSignal(rawData);
@@ -77,9 +87,6 @@ public class SignalGraphPanel extends JPanel {
 
         left.addActionListener(e -> scroll(-windowSize / 2));
         right.addActionListener(e -> scroll(windowSize / 2));
-        //If autorange
-        //resetZoom.addActionListener(e -> chartPanel.restoreAutoBounds());
-        //IF fixed y bounds to -1,1
         resetZoom.addActionListener(e -> {
             // Get the plot
             XYPlot plot2 = chart.getXYPlot();
@@ -92,14 +99,13 @@ public class SignalGraphPanel extends JPanel {
         //pack();
         setVisible(true);
     }
-
-    /*private void updateWindow(int start, int end) {
-        ecgSeries.clear();
-        for (int i = start; i < end && i < fullData.length; i++) {
-            ecgSeries.addOrUpdate(new Millisecond(new Date(i)), fullData[i]);
-        }
-    }*/
-
+    /**
+     * Updates the displayed segment of the signal by clearing the current time series
+     * and repopulating it with samples from the indicated range.
+     *
+     * @param start the starting sample index of the window
+     * @param end the ending sample index of the window (exclusive)
+     */
     private void updateWindow(int start, int end) {
         ecgSeries.clear();
         double msPerSample = 1000.0 / sf;  // 10 ms per sample for 100 Hz
@@ -109,7 +115,13 @@ public class SignalGraphPanel extends JPanel {
             ecgSeries.addOrUpdate(new Millisecond(new Date(timeMillis)), fullData[i]);
         }
     }
-
+    /**
+     * Scrolls the signal window by a given offset. The method adjusts the current
+     * index while ensuring that the view remains within the bounds of the signal
+     * data, then refreshes the display.
+     *
+     * @param delta the number of samples to shift the window by (positive or negative)
+     */
     private void scroll(int delta) {
         currentIndex = Math.max(0, Math.min(currentIndex + delta, fullData.length - windowSize));
         updateWindow(currentIndex, currentIndex + windowSize);

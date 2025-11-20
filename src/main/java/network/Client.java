@@ -133,7 +133,7 @@ public class Client {
         out.println("Hi! I'm a new client!\n");
     }
 
-    public void login(String email, String password) throws IOException, InterruptedException {
+    public void login(String email, String password) throws IOException, InterruptedException, LogInError {
         //String message = "LOGIN;" + email + ";" + password;
 
         Map<String, Object> data = new HashMap<>();

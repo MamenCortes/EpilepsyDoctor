@@ -4,10 +4,20 @@ import net.miginfocom.swing.MigLayout;
 import ui.windows.Application;
 import javax.swing.*;
 import java.awt.*;
-
+/**
+ * A dialog panel displaying a question and two action buttons.
+ * It arranges the components using MigLayout and applies custom colors.
+ */
 public class AskQuestionDialog extends JPanel {
     private JLabel errorMessage;
-
+    /**
+     * Creates a new AskQuestionDialog containing the provided question text
+     * along with OK and Cancel buttons.
+     *
+     * @param ipTextField the text of the question to display
+     * @param okbutton the confirmation button
+     * @param cancelbutton the cancellation button
+     */
     public AskQuestionDialog(MyTextField ipTextField, MyButton okbutton, MyButton cancelbutton) {
         this.setLayout(new MigLayout("wrap, fill, inset 20", "push[center]push", "push[]25[]10[]20[]push"));
         JLabel label = new JLabel("Introduce server IP Address:");
@@ -42,7 +52,11 @@ public class AskQuestionDialog extends JPanel {
         this.add(errorMessage,"w 10%" );
 
     }
-
+    /**
+     * Displays an error message to the user.
+     *
+     * @param text the message to display
+     */
     public void showErrorMessage(String text) {
         errorMessage.setVisible(true);
         errorMessage.setText(text);

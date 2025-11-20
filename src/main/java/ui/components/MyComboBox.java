@@ -10,13 +10,17 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
-
+/**
+ * Custom JComboBox with themed colors, hover styling, and custom cell rendering.
+ * Supports optional hint text and adapts disabled state styling.
+ *
+ * @param <E> type of elements stored in the combo box
+ */
 public class MyComboBox<E> extends JComboBox<E> {
 
     private static final long serialVersionUID = 1696707481994733631L;
     private Color backgroundColor = new Color(230, 245, 241);
     private boolean mouseOver;
-    private String hint = "";
 
     public MyComboBox() {
         installUI();

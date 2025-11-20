@@ -9,6 +9,7 @@ import java.util.Objects;
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
+import network.LogInError;
 import ui.components.*;
 
 public class UserLogIn extends JPanel implements ActionListener{
@@ -219,7 +220,7 @@ public class UserLogIn extends JPanel implements ActionListener{
             try {
                 appMenu.client.login(email, password);
                 return true;
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException | InterruptedException | LogInError e) {
                 showErrorMessage(e.getMessage());
                 return false;
             }
