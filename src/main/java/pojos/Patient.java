@@ -17,7 +17,7 @@ public class Patient {
     private LocalDate dateOfBirth;
     private ArrayList<Report> symptoms;
     private ArrayList<Signal> recordings;
-    private int assignedDoctorId; //No creo que haga falta
+    private int doctor_id;
 
 
     public Patient() {
@@ -31,7 +31,7 @@ public class Patient {
         recordings = RandomData.generateRandomSignalRecordings();
     }
 
-    public Patient(int id, String name, String surname, String email, int phoneNumber, String gender, LocalDate dateOfBirth, int assignedDoctorId) {
+    public Patient(int id, String name, String surname, String email, int phoneNumber, String gender, LocalDate dateOfBirth, int doctor_id) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -39,7 +39,7 @@ public class Patient {
         this.phoneNumber = phoneNumber;
         this.gender = gender;
         this.dateOfBirth = dateOfBirth;
-        this.assignedDoctorId = assignedDoctorId;
+        this.doctor_id = doctor_id;
         symptoms = RandomData.generateRandomSymptomReports();
         recordings = RandomData.generateRandomSignalRecordings();
     }
@@ -100,12 +100,12 @@ public class Patient {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public int getAssignedDoctorId() {
-        return assignedDoctorId;
+    public int getDoctor_id() {
+        return doctor_id;
     }
 
-    public void setAssignedDoctorId(int assignedDoctorId) {
-        this.assignedDoctorId = assignedDoctorId;
+    public void setDoctor_id(int doctor_id) {
+        this.doctor_id = doctor_id;
     }
 
 
@@ -119,7 +119,7 @@ public class Patient {
                 ", phoneNumber=" + phoneNumber +
                 ", sex='" + gender + '\'' +
                 ", age=" + dateOfBirth +
-                ", assignedDoctorId=" + assignedDoctorId +
+                ", assignedDoctorId=" + doctor_id +
                 '}';
     }
 
@@ -140,7 +140,28 @@ public class Patient {
         patient.setPhoneNumber(jason.get("contact").getAsInt());
         patient.setDateOfBirth(LocalDate.parse(jason.get("dateOfBirth").getAsString()));
         patient.setGender(jason.get("gender").getAsString());
-        patient.setAssignedDoctorId(jason.get("doctorId").getAsInt());
+        patient.setDoctor_id(jason.get("doctorId").getAsInt());
         return patient;
+    }
+
+    /**
+     * Converts this {@code Patient} into a {@link JsonObject}. The JSON object specifies all public fields
+     * except the {@code active} field //TODO: por que no lo especifica?
+     *
+     * @return  a JSON representation of this patient
+     *
+     * @see JsonObject
+     */
+    public JsonObject toJason() {
+        JsonObject jason = new JsonObject();
+        jason.addProperty("id", id);
+        jason.addProperty("name", name);
+        jason.addProperty("surname", surname);
+        jason.addProperty("email", email);
+        jason.addProperty("contact", phoneNumber);
+        jason.addProperty("dateOfBirth", dateOfBirth.toString());
+        jason.addProperty("gender", gender);
+        jason.addProperty("doctorId", doctor_id);
+        return jason;
     }
 }

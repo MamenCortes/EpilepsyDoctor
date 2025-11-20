@@ -1,13 +1,10 @@
 package ui.windows;
 
-import pojos.Patient;
 import ui.components.MenuTemplate;
 import ui.components.MyButton;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainMenu extends MenuTemplate {
     private static final long serialVersionUID = 6050014345831062858L;
@@ -52,21 +49,16 @@ public class MainMenu extends MenuTemplate {
             //appMenu.changeToAddPatient();
             doctorInfoPanel.updateView(appMenu.doctor);
             appMenu.changeToPanel(doctorInfoPanel);
-            /*try {
-                appMenu.client.requestDoctorInfo();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }*/
         }else if(e.getSource()== searchPatientsBt) {
             //appMenu.changeToSearchPatient();
-            List<Patient> patients = new ArrayList<>();
-            try {
-                patients = appMenu.client.getPatientsFromDoctor(appMenu.doctor.getID());
-                System.out.println(patients);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+            if(appMenu.doctor.getPatients().isEmpty()) {
+                try {
+                    appMenu.doctor.setPatients(appMenu.client.getPatientsFromDoctor(appMenu.doctor.getId()));
+                } catch (IOException | InterruptedException ex) {
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
-            searchPatientsPanel.updatePatientDefModel(patients);
+            searchPatientsPanel.updatePatientDefModel(appMenu.doctor.getPatients());
             appMenu.changeToPanel(searchPatientsPanel);
         }else if(e.getSource()== logOutBt) {
             appMenu.doctor = null;

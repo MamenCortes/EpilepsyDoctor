@@ -105,7 +105,7 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
         errorMessage.setVisible(false);
     }
 
-    private void saveComments() throws IOException {
+    private void saveComments() throws IOException, InterruptedException {
         String comments = commentsTextArea.getText();
         if(!signal.getComments().equals(comments)){
             signal.setComments(comments);
@@ -125,7 +125,7 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
                 //TODO: Save comments in signal
                 saveComments();
                 appMain.changeToPanel(parentPanel);
-            }catch(IOException ex){
+            }catch(IOException | InterruptedException ex){
                 //TODO: show popUp dialog asking if you are sure you eant to go back without saving
                 showErrorMessage("Error saving comments");
             }

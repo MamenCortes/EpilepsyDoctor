@@ -127,9 +127,10 @@ public class Application extends JFrame {
 
     private void stopEverything(){
         if(client != null && client.isConnected()){
-            client.stopClient();
+            client.stopClient(true);
         }
         dispose();
+        System.exit(0);
     }
 
     public void changeToUserLogIn() {
@@ -138,7 +139,6 @@ public class Application extends JFrame {
         this.setContentPane(logInPanel);
     }
 
-    //TODO: pensar cómo gestionar los paneles repetidos
     public void changeToPanel(JPanel panel) {
         hideAllPanels();
         if(!appPanels.contains(panel)) {
@@ -213,6 +213,7 @@ public class Application extends JFrame {
         dialog.getContentPane().setBackground(Color.white);
         dialog.pack();
         dialog.setLocationRelativeTo(parentFrame);
+        askForIP.showErrorMessage("Remember to turn off the computer firewall");
         //dialog.setSize(400, 200);
 
         okButton.addActionListener(new ActionListener() {
@@ -244,6 +245,32 @@ public class Application extends JFrame {
             }
         });
 
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+                stopEverything();
+            }
+        });
+
         dialog.setVisible(true);
+    }
+
+    public void onServerDisconnected() {
+        SwingUtilities.invokeLater(() -> {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "The conexion with the server was interrupted.",
+                    "Conexion error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
+            // Espera a que el message dialog finalice y luego lanza el siguiente diálogo
+            SwingUtilities.invokeLater(() -> {
+                this.showDialogIntroduceIP(this);
+                System.out.println("Requested new IP address");
+            });
+        });
     }
 }

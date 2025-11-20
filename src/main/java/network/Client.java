@@ -13,6 +13,8 @@ import ui.windows.Application;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +24,12 @@ public class Client {
     BufferedReader in;
     private Application appMain;
     private Gson gson = new Gson();
+    private volatile Boolean running = false;
+    //Estructura diseñada para comunicar threads entre sí de manera segura y sincronizada
+    //permite que un thread meta mensajes en la cola (con put())
+    //Y que otro thread los reciba (con take() o poll())
+    //si no hay mensajes, take() se bloquea automáticamente, sin consumir CPU
+    private BlockingQueue<JsonObject> responseQueue = new LinkedBlockingQueue<>();
 
     public Client(Application appMain) {
         this.appMain = appMain;
@@ -31,18 +39,64 @@ public class Client {
 
         try {
             //socket = new Socket("localhost", 9009);
-            socket = new Socket(ip, port);
+            socket = createSocket(ip, port);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(
                     new InputStreamReader(socket.getInputStream())
             );
+            running = true;
             sendInitialMessage();
+            startListener();
             return true;
         }catch(IOException e){
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, e);
+            //if(!socket.isConnected()){appMain.onServerDisconnected();}
             return false;
         }
+    }
 
+    /// Start a thread that listens for messages from the server
+    /// If the server sends STOP_CLIENT, the connection is closed and also the app???
+    public void startListener() {
+        System.out.println("Listening for messages...");
+        Thread listener = new Thread(() -> {
+            try {
+                String line;
+                while (((line = in.readLine()) != null)&&running) {
+                    //System.out.println("New message: " + line);
+                    JsonObject json = gson.fromJson(line, JsonObject.class);
+
+                    String type = json.get("type").getAsString();
+
+                    if (type.equals("STOP_CLIENT")) {
+                        System.out.println("Server requested shutdown");
+                        stopClient(false);
+                        break;
+                    }
+
+                    try {
+                        responseQueue.put(json);
+                    }catch (InterruptedException e){
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.addProperty("type", "LOGIN_REQUEST_RESPONSE");
+                        jsonObject.addProperty("status", "ERROR");
+                        jsonObject.addProperty("message", "Error while processing login request");
+                        responseQueue.add(jsonObject);
+                    }
+
+                }
+            } catch (IOException ex) {
+                System.out.println("Server connection closed: " + ex.getMessage());
+                //In case the connection is closed without the server asking for it first
+                stopClient(false);
+            }
+        });
+
+        //listener.setDaemon(true); // client ends even if thread is running
+        listener.start();
+    }
+
+    protected Socket createSocket(String ip, int port) throws IOException {
+        return new Socket(ip, port);
     }
 
     public Boolean isConnected(){
@@ -53,12 +107,33 @@ public class Client {
         }
     }
 
+    public void stopClient(boolean initiatedByClient) {
+        if (initiatedByClient && socket != null && !socket.isClosed()) {
+            // Only send STOP_CLIENT if CLIENT requested shutdown
+            Map<String, Object> message = new HashMap<>();
+            message.put("type", "STOP_CLIENT");
+            String jsonMessage = gson.toJson(message);
+            out.println(jsonMessage);
+            System.out.println("Sent (client-initiated): " + jsonMessage);
+        }
+
+        System.out.println("Stopping client...");
+        running = false;
+
+        // Notify UI ONLY if the server disconnected
+        if (!initiatedByClient) {
+            appMain.onServerDisconnected();
+        }
+
+        releaseResources(out, in, socket);
+    }
+
     private void sendInitialMessage() throws IOException {
         System.out.println("Connection established... sending text");
         out.println("Hi! I'm a new client!\n");
     }
 
-    public boolean login(String email, String password) throws IOException {
+    public void login(String email, String password) throws IOException, InterruptedException {
         //String message = "LOGIN;" + email + ";" + password;
 
         Map<String, Object> data = new HashMap<>();
@@ -77,8 +152,10 @@ public class Client {
         out.println(jsonMessage); // send JSON message
         System.out.println(jsonMessage);
         // Read the response
-        String responseLine = in.readLine();
-        JsonObject response = gson.fromJson(responseLine, JsonObject.class);
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("LOGIN_RESPONSE"));
 
         // Check response
         String status = response.get("status").getAsString();
@@ -105,39 +182,27 @@ public class Client {
                 out.println(jsonMessage); // send JSON message
 
                 // Read the response
-                responseLine = in.readLine();
-                response = gson.fromJson(responseLine, JsonObject.class);
-                System.out.println(responseLine);
+                do {
+                    response = responseQueue.take();
+                } while (!response.get("type").getAsString().equals("REQUEST_DOCTOR_BY_EMAIL_RESPONSE"));
+                System.out.println(response);
                 // Check response
                 status = response.get("status").getAsString();
-                if (status.equals("SUCCESS")) {
-                    Doctor doctor = Doctor.fromJason(response.getAsJsonObject("doctor"));
-                    System.out.println(doctor);
-                    appMain.doctor = doctor;
-                    return true;
+                if (!status.equals("SUCCESS")) {
+                    throw new LogInError(response.get("message").getAsString());
                 }
-                return false;
+                Doctor doctor = Doctor.fromJason(response.getAsJsonObject("doctor"));
+                System.out.println(doctor);
+                appMain.doctor = doctor;
             }else{
-                return false;
+                throw new LogInError(response.get("message").getAsString());
             }
         } else {
-            String errorMsg = response.get("message").getAsString();
-            System.out.println("Login failed: " + errorMsg);
-            return false;
+            throw new LogInError(response.get("message").getAsString());
         }
     }
 
-    public void stopClient() {
-        Map<String, Object> message = new HashMap<>();
-        message.put("type", "STOP_CLIENT");
-        String jsonMessage = gson.toJson(message);
-        out.println(jsonMessage);
-        System.out.println("Sent: " + jsonMessage);
-        //out.println("stop");
-        releaseResources(out, socket);
-    }
-
-    public List<Patient> getPatientsFromDoctor(int doctor_id) throws IOException {
+    public List<Patient> getPatientsFromDoctor(int doctor_id) throws IOException, InterruptedException {
         Map<String, Object> data = new HashMap<>();
         data.put("doctor_id", doctor_id);
         data.put("user_id", appMain.user.getId());
@@ -149,8 +214,10 @@ public class Client {
         String jsonMessage = gson.toJson(message);
         out.println(jsonMessage); // send JSON message
 
-        String line = in.readLine();
-        JsonObject response = gson.fromJson(line, JsonObject.class);
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE"));
         List<Patient> patients = new ArrayList<>();
 
         String status = response.get("status").getAsString();
@@ -162,11 +229,13 @@ public class Client {
             }
 
             System.out.println("Received " + patients.size() + " patients.");
+        }else {
+            throw new ClientServerCommunicationError(response.get("message").getAsString());
         }
         return patients;
     }
 
-    public void saveComments(Integer patient_id, Signal signal) throws IOException {
+    public void saveComments(Integer patient_id, Signal signal) throws IOException, InterruptedException {
         System.out.println("Saving comments for patient " + patient_id);
         Map<String, Object> data = new HashMap<>();
         data.put("patient_id", patient_id);
@@ -183,12 +252,14 @@ public class Client {
         System.out.println("Sent: " + jsonMessage);
 
         //wait for response
-        String line = in.readLine();
-        JsonObject response = gson.fromJson(line, JsonObject.class);
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("SAVE_COMMENTS_SIGNAL_RESPONSE"));
         String status = response.get("status").getAsString();
         System.out.println(response.get("status").getAsString());
         if (!status.equals("SUCCESS")) {
-            throw new IOException();
+            throw new ClientServerCommunicationError(response.get("message").getAsString());
         }
     }
 
@@ -222,11 +293,17 @@ public class Client {
         //System.exit(0);
     }
 
-    private static void releaseResources(PrintWriter printWriter, Socket socket) {
-        printWriter.close();
-
+    private static void releaseResources(PrintWriter printWriter, BufferedReader reader,  Socket socket) {
+        if(printWriter!= null)printWriter.close();
+        try{
+            if(reader!= null)reader.close();
+        } catch (IOException e) {
+            System.out.println("Error closing resources: " + e.getMessage());
+        }
         try {
             socket.close();
+            System.out.println("Socket closed successfully");
+
         } catch (IOException ex) {
             System.out.println("Error closing socket"+ex.getMessage());
         }

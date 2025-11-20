@@ -144,6 +144,7 @@ public class UserLogIn extends JPanel implements ActionListener{
             System.out.println("LogIn");
             if(logIn()) {
                 resetPanel();
+                appMenu.changeToMainMenu();
             }
 
         }else if(e.getSource() == changePassword) {
@@ -216,48 +217,16 @@ public class UserLogIn extends JPanel implements ActionListener{
         if(!email.isBlank() && !password.isBlank()) {
 
             try {
-                if(appMenu.client.login(email, password)){
-                    appMenu.changeToMainMenu();
-                    return true;
-                }else{
-                    showErrorMessage("Incorrect email or password");
-                }
-            } catch (IOException e) {
-                showErrorMessage(e.getMessage());
-            }
-            //appMenu.changeToMainMenu();
-            /*User user = appMenu.jpaUserMan.login(email, password);
-            System.out.println(user);
-
-            //User is null if it doesn't exist
-            if(user != null) {
-                appMenu.setUser(user);
+                appMenu.client.login(email, password);
                 return true;
-            }else {
-                panelLogIn.showErrorMessage("Invalid user or password");
+            } catch (IOException | InterruptedException e) {
+                showErrorMessage(e.getMessage());
                 return false;
-            }*/
-
-            return false;
-
+            }
         }else {
             showErrorMessage("Complete all fields");
             return false;
         }
-    }
-
-    private Boolean register() {
-        String email = emailTxF.getText();
-        String password = passwordTxF.getText();
-        String roleText = "";
-        if(roleCB.getModel().getSelectedItem() != "Select your role...") {
-            roleText = roleCB.getModel().getSelectedItem().toString();
-        }else {
-            showErrorMessage("Select a role");
-            return false;
-        }
-
-        return true;
     }
 
     public Boolean canChangePassword() {
