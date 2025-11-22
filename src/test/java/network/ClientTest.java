@@ -1,5 +1,6 @@
 package network;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.*;
@@ -13,7 +14,10 @@ import ui.windows.Application;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.Socket;
+import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -208,8 +212,8 @@ public class ClientTest {
         queue.add(JsonParser.parseString(
                 "{ \"type\":\"REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE\", " +
                         "\"status\":\"SUCCESS\", " +
-                        "\"patients\":[" +p1.toJason()+
-                        "," +p2.toJason()+
+                        "\"patients\":[" + p1.toJason() +
+                        "," + p2.toJason() +
                         "]}"
         ).getAsJsonObject());
 
@@ -310,5 +314,202 @@ public class ClientTest {
                 () -> client.saveComments(5, signal));
     }
 
+    @Test
+    void testGetAllSignalsFromPatientSuccess() throws Exception {
+
+        ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
+
+        Client client = spy(new Client(app));
+
+        doReturn(socket).when(client).createSocket(anyString(), anyInt());
+        when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.getInputStream()).thenReturn(mockInput);
+
+        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
+        app.user = fakeUser;
+
+        client.connect("localhost", 9009);
+
+        // --- Fake signals metadata ---
+        JsonObject s1 = new JsonObject();
+        s1.addProperty("signal_id", 1);
+        s1.addProperty("date", "2025-02-01");
+        s1.addProperty("comments", "Sig1");
+        s1.addProperty("sampling_rate", 500.0);
+        s1.addProperty("patient_id", 88);
+
+        JsonObject s2 = new JsonObject();
+        s2.addProperty("signal_id", 2);
+        s2.addProperty("date", "2025-02-02");
+        s2.addProperty("comments", "Sig2");
+        s2.addProperty("sampling_rate", 1000.0);
+        s2.addProperty("patient_id", 88);
+
+        JsonObject s3 = new JsonObject();
+        s3.addProperty("signal_id", 3);
+        s3.addProperty("date", "2025-02-03");
+        s3.addProperty("comments", "Sig3");
+        s3.addProperty("sampling_rate", 2000.0);
+        s3.addProperty("patient_id", 88);
+
+        JsonArray signalsArray = new JsonArray();
+        signalsArray.add(s1);
+        signalsArray.add(s2);
+        signalsArray.add(s3);
+        JsonObject response = new JsonObject();
+        response.addProperty("type", "REQUEST_PATIENT_SIGNALS_RESPONSE");
+        response.addProperty("status", "SUCCESS");
+        response.add("signals", signalsArray);
+        // Prepare response queue
+        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+        queue.add(response);
+
+        setField(client, "responseQueue", queue);
+
+        List<Signal> signals = client.getAllSignalsFromPatient(88);
+
+        assertEquals(3, signals.size());
+
+        assertEquals(1, signals.get(0).getId());
+        assertEquals("Sig1", signals.get(0).getComments());
+
+        assertEquals(2, signals.get(1).getId());
+        assertEquals("Sig2", signals.get(1).getComments());
+
+        assertEquals(3, signals.get(2).getId());
+        assertEquals("Sig3", signals.get(2).getComments());
+    }
+    @Test
+    void testGetAllSignalsFromPatientError() throws Exception {
+
+        // Fake socket streams
+        ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
+
+        Client client = spy(new Client(app));
+
+        // Mock socket creation
+        doReturn(socket).when(client).createSocket(anyString(), anyInt());
+        when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.getInputStream()).thenReturn(mockInput);
+
+        // Fake logged user
+        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
+        app.user = fakeUser;
+
+        // Connect
+        client.connect("localhost", 9009);
+
+        // --- Fake ERROR response ---
+        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+        queue.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_PATIENT_SIGNALS_RESPONSE\", " +
+                        "\"status\":\"ERROR\", " +
+                        "\"message\":\"Patient not found\" }"
+        ).getAsJsonObject());
+
+        // Inject queue
+        setField(client, "responseQueue", queue);
+
+        // --- EXPECT EXCEPTION ---
+        assertThrows(ClientServerCommunicationError.class,
+                () -> client.getAllSignalsFromPatient(88));
+    }
+    @Test
+    void testGetSignalByIdSuccessWithZip() throws Exception {
+
+        // Fake streams
+        ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
+
+        Client client = spy(new Client(app));
+
+        doReturn(socket).when(client).createSocket(anyString(), anyInt());
+        when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.getInputStream()).thenReturn(mockInput);
+
+        // Logged doctor
+        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+
+        client.connect("localhost", 9009);
+
+        // ---- 1) Crear ZIP temporal ----
+        File tempZip = File.createTempFile("signal77", ".zip");
+        try (FileOutputStream fos = new FileOutputStream(tempZip)) {
+            fos.write("THIS_IS_FAKE_ZIP_DATA".getBytes());
+        }
+        byte[] bytes = java.nio.file.Files.readAllBytes(tempZip.toPath());
+        String base64 = Base64.getEncoder().encodeToString(bytes);
+
+        // ---- 2) Crear JSON con ZIP ----
+        String json = """
+        {
+          "type": "REQUEST_SIGNAL_BY_ID_RESPONSE",
+          "status": "SUCCESS",
+          "compression": "zip-base64",
+          "filename": "signal_77.zip",
+          "data": "%s",
+          "metadata": {
+            "signal_id": 77,
+            "date": "2025-02-01",
+            "comments": "Test signal",
+            "sampling_rate": 500.0,
+            "patient_id": 88
+          }
+        }
+        """.formatted(base64);
+
+        JsonObject responseJson = JsonParser.parseString(json).getAsJsonObject();
+
+        // ---- 3) Insert into responseQueue ----
+        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+        queue.add(responseJson);
+        setField(client, "responseQueue", queue);
+
+        // ---- 4) Execute method ----
+        Signal signal = client.getSignalFromId(77);
+
+        // ---- 5) Assertions ----
+        assertNotNull(signal);
+        assertEquals(77, signal.getId());
+        assertEquals("Test signal", signal.getComments());
+        assertEquals("500.0", signal.getFrequency().toString());
+        assertEquals(LocalDate.of(2025, 2, 1), signal.getDate());
+
+        // ZIP must exist on disk (created from Base64)
+        assertNotNull(signal.getZipFile());
+        assertTrue(signal.getZipFile().exists());
+    }
+
+    @Test
+    void testGetSignalByIdError() throws Exception {
+
+        ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
+        ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
+
+        Client client = spy(new Client(app));
+
+        doReturn(socket).when(client).createSocket(anyString(), anyInt());
+        when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.getInputStream()).thenReturn(mockInput);
+
+        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+
+        client.connect("localhost", 9009);
+
+        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+
+        queue.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_SIGNAL_BY_ID_RESPONSE\", " +
+                        "\"status\":\"ERROR\", \"message\":\"Signal not found\" }"
+        ).getAsJsonObject());
+
+        setField(client, "responseQueue", queue);
+
+        // Expect exception
+        assertThrows(ClientServerCommunicationError.class,
+                () -> client.getSignalFromId(77));
+    }
 
 }

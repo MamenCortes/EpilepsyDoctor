@@ -4,11 +4,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import pojos.Signal;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ECGFileReader {
     public static double[] readECGFromFile(String path) throws IOException {
@@ -103,6 +105,67 @@ public class ECGFileReader {
         signal.setAcc(acc);
         return signal;
     }
+    public static Signal readSignalFromZip(File zipFile) throws IOException {
+
+        // 1) Crear carpeta temporal donde descomprimir
+        Path tempDir = Files.createTempDirectory("signal_unzip_");
+        File extractedCSV = null;
+
+        // 2) Descomprimir ZIP
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
+            ZipEntry entry;
+
+            while ((entry = zis.getNextEntry()) != null) {
+                File outFile = new File(tempDir.toFile(), entry.getName());
+
+                try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                    zis.transferTo(fos);
+                }
+
+                if (entry.getName().endsWith(".csv")) {
+                    extractedCSV = outFile;
+                }
+            }
+        }
+
+        if (extractedCSV == null) {
+            throw new IOException("CSV file not found inside ZIP");
+        }
+
+        // 3) Leer el CSV para obtener ECG + ACC
+        return readSignalFromCsv(extractedCSV);
+    }
+    public static Signal readSignalFromCsv(File csvFile) throws IOException {
+        List<Double> ecgList = new ArrayList<>();
+        List<Double> accX = new ArrayList<>();
+        List<Double> accY = new ArrayList<>();
+        List<Double> accZ = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+
+                if (parts.length < 4) continue;
+
+                ecgList.add(Double.parseDouble(parts[0]));
+                accX.add(Double.parseDouble(parts[1]));
+                accY.add(Double.parseDouble(parts[2]));
+                accZ.add(Double.parseDouble(parts[3]));
+            }
+        }
+
+        // Construimos un Signal temporal
+        Signal s = new Signal();
+        s.setEcg(ecgList.stream().mapToDouble(Double::doubleValue).toArray());
+        //como funciona lo de acc para q con solo un array pueda guardar los 3 ejes?
+       //s.setAcc(accX, accY, accZ);
+        s.setFrequency(1000); // o descubre del CSV o del metadata
+
+        return s;
+    }
+
 
     private static Integer getSamplingRate(String metadata){
             // Parse JSON

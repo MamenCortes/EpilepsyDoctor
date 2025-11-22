@@ -234,7 +234,63 @@ public class Client {
         }
         return patients;
     }
+public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException, InterruptedException {
+        Map<String, Object> data = new HashMap<>();
+        data.put("patient_id", patient_id);
+        data.put("user_id", appMain.user.getId());
 
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "REQUEST_PATIENT_SIGNALS");
+        message.put("data", data);
+
+        String jsonMessage = gson.toJson(message);
+        out.println(jsonMessage);
+
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("REQUEST_PATIENT_SIGNALS_RESPONSE"));
+        List<Signal> signals = new ArrayList<>();
+
+        String status = response.get("status").getAsString();
+        if (status.equals("SUCCESS")) {
+            JsonArray data_response = response.getAsJsonArray("signals");
+
+            for (JsonElement element : data_response) {
+                signals.add(Signal.fromJason(element.getAsJsonObject()));
+            }
+
+            System.out.println("Received " + signals.size() + " signals.");
+        }else {
+            throw new ClientServerCommunicationError(response.get("message").getAsString());
+        }
+        return signals;
+    }
+    public Signal getSignalFromId (int signal_id) throws IOException, InterruptedException {
+        Map<String, Object> data = new HashMap<>();
+        data.put("signal_id", signal_id);
+        data.put("user_id", appMain.user.getId());
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "REQUEST_SIGNAL");
+        message.put("data", data);
+        String jsonMessage = gson.toJson(message);
+        out.println(jsonMessage);
+
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("REQUEST_SIGNAL_RESPONSE"));
+
+        String status = response.get("status").getAsString();
+        if (status.equals("SUCCESS")) {
+            JsonObject data_response = response.getAsJsonObject("signal");
+            Signal signal = Signal.fromJasonWithZip(data_response);
+            System.out.println("Received signal: " + signal);
+            return signal;
+        }else {
+            throw new ClientServerCommunicationError(response.get("message").getAsString());
+        }
+    }
     public void saveComments(Integer patient_id, Signal signal) throws IOException, InterruptedException {
         System.out.println("Saving comments for patient " + patient_id);
         Map<String, Object> data = new HashMap<>();
