@@ -3,7 +3,45 @@
 The Night Guardian platform enables clinicians to remotely monitor epilepsy patients using ECG, accelerometer (ACC) signals, symptom tracking, and structured clinical data.
 This guide explains how to use the Doctor Application step by step, following the workflow a doctor will typically perform during daily use.
 
-# Summary of Doctor Capabilities
+## Table of Contents
+- [How to Download and Run](#how-to-download-and-run)
+- [Initial Conditions](#initial-conditions)
+- [User Interface Guide](#user-interface-guide)
+- [Summary of Doctor Capabilities](#summary-of-doctor-capabilities)
+ - [Connecting to the server](#connecting-to-the-server)
+ - [Logging In](#logging-in)
+ - [Main Menu](#main-menu)
+ - [Patient Management](#finding-and-selecting-patients)
+ - [Patient Profile](#patient-profile)
+ - [Reviewing Physiological Signals](#signal-viewer)
+ - [Handling Network Disruptions](#handling-network-disruptions)
+
+## How to Download and Run
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/MamenCortes/EpilepsyDoctor.git
+    ```
+2. Navigate to the project root folder.
+3. Run the executable **.jar** file:
+    ```bash
+    java -jar EpilepsyDoctor.jar
+    ```
+   Alternatively, you may run the program from your IDE by executing the  
+   `Application.java` class inside the project.
+   
+## Initial Conditions
+Upon executing the system for the first time, the following users will be automatically added to facilitate the system's navigation: 
+
+| Email  | Password   | Role     |
+|-----------|------------|----------|
+| @nightguardian.com     | 12345678   | Doctor    |
+| @nightguardian.com     | 12345678   | Doctor    |
+| @nightguardian.com     | 12345678   | Doctor    |
+
+*The password 12345678 was used by default. However, it can be changed from the LogIn view*
+
+## Summary of Doctor Capabilities
 
 With the Doctor Application, you can:
 
@@ -17,7 +55,7 @@ With the Doctor Application, you can:
 * Access your own information
 
 # User Interface Guide
-## 1. Connecting to the Night Guardian Server
+## 1. Connecting to the Server
 
 When launching the Doctor Application, a dialog box appears requesting the **Server IP address**.
 
@@ -106,7 +144,7 @@ Choose **Search Patients** to access the list of your patients.
 
 To open a patient’s profile, select a patient and click **Open File**.
 
-## 5. Patient Profile Overview
+## 5. Patient Profile
 
 The patient profile contains three main tabs:
 
@@ -145,7 +183,7 @@ Visualizes symptoms reported by the patient on a **monthly calendar**. Features:
 This view helps identify symptom trends.
 <img src="img/patient-info-3.png" width="500">
 
-## 6. Signal Viewer: ECG and ACC Analysis
+## 6. Signal Viewer
 
 Selecting a recording opens the **Signal Viewer**.
 
