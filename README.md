@@ -1,4 +1,4 @@
-# Night Guardian — Doctor Application User Guide
+# 🧠 Night Guardian — Doctor Application User Guide
 
 The Night Guardian platform enables clinicians to remotely monitor epilepsy patients using ECG, accelerometer (ACC) signals, symptom tracking, and structured clinical data.
 This guide explains how to use the Doctor Application step by step, following the workflow a doctor will typically perform during daily use.
@@ -7,14 +7,14 @@ This guide explains how to use the Doctor Application step by step, following th
 - [How to Download and Run](#how-to-download-and-run)
 - [Initial Conditions](#initial-conditions)
 - [User Interface Guide](#user-interface-guide)
-- [Summary of Doctor Capabilities](#summary-of-doctor-capabilities)
- - [Connecting to the server](#connecting-to-the-server)
- - [Logging In](#logging-in)
- - [Main Menu](#main-menu)
- - [Patient Management](#finding-and-selecting-patients)
- - [Patient Profile](#patient-profile)
- - [Reviewing Physiological Signals](#signal-viewer)
- - [Handling Network Disruptions](#handling-network-disruptions)
+- [Connecting to the Server](#1-connecting-to-the-server)
+- [Logging In](#2-logging-in)
+- [Main Menu](#3-main-menu)
+- [Patient Management](#4-finding-and-selecting-patients)
+- [Patient Profile](#5-patient-profile)
+- [Reviewing Physiological Signals](#6-signal-viewer)
+- [Handling Network Disruptions](#7-handling-network-disruptions)
+- [Authors](#authors)
 
 ## How to Download and Run
 
@@ -27,8 +27,7 @@ This guide explains how to use the Doctor Application step by step, following th
     ```bash
     java -jar EpilepsyDoctor.jar
     ```
-   Alternatively, you may run the program from your IDE by executing the  
-   `Application.java` class inside the project.
+   Alternatively, you may run the program from your IDE by executing the `Application.java` class inside the project.
    
 ## Initial Conditions
 Upon executing the system for the first time, the following users will be automatically added to facilitate the system's navigation: 
@@ -113,7 +112,7 @@ Then click **Log In**. The possible outcomes are:
 * **Successful login** → access to the Doctor Main Menu
 * **Incorrect credentials / insufficient permissions** → error message. Retry entering a valid email and password. 
 
-## 3. Main Menu Overview
+## 3. Main Menu
 
 After login, the **Doctor Main Menu** is displayed. It acts as the navigation hub for all medical features.
 
@@ -225,3 +224,13 @@ If the server disconnects due to network issues, server shutdown or unexpected e
 3. Require reconnection before further use
 
 <img src="img/conexion-error.png" width="500">
+
+## 👥 Authors
+
+This project was developed as part of the **Telemedicine course at CEU San Pablo University** by:
+
+* [@MamenCortes](https://github.com/MamenCortes)
+* [@MariaMM04](https://github.com/MariaMM04)
+* [@MartaSanchezDelHoyo](https://github.com/MartaSanchezDelHoyo)
+* [@paulablancog](https://github.com/paulablancog)
+* [@Claaublanco4](https://github.com/Claaublanco4)
