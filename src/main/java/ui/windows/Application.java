@@ -43,6 +43,8 @@ import java.util.*;
  *     <li>The user must authenticate before accessing other panels.</li>
  *     <li>If the server disconnects, a new dialog prompts for reconnection.</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class Application extends JFrame {
     public static Color darker_purple = new Color(114, 82, 153); //#725299

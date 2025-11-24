@@ -35,6 +35,8 @@ import java.io.IOException;
  *     <li>Shows the raw signal graphs via {@link SignalGraphPanel}</li>
  *     <li>Displays and allows modifying comments associated with this recording</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class RecordingGraphs extends JPanel implements ActionListener, MouseListener {
     private Application appMain;

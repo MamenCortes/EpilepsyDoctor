@@ -33,6 +33,8 @@ import javax.swing.*;
  *     <li>When returning to the main menu, {@link #resetPanel()} clears filters,
  *         search text, and list contents.</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class SearchPatients extends JPanel implements ActionListener, MouseListener {
 

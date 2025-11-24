@@ -59,6 +59,8 @@ import java.util.stream.Collectors;
  *     <li>“SYMPTOMS” opens the symptoms calendar subview.</li>
  *     <li>“BACK TO MENU” removes this panel and returns to the main menu.</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class PatientInfo extends JPanel implements ActionListener, MouseListener {
     private static final long serialVersionUID = -2213334704230710767L;

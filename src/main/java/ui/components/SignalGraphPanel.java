@@ -24,6 +24,8 @@ import ui.windows.Application;
  * time–series graph. The panel preprocesses the raw signal, initializes a
  * JFreeChart time-series plot, and provides navigation controls to scroll
  * through the signal window.
+ *
+ *  @author MamenCortes
  */
 public class SignalGraphPanel extends JPanel {
     private TimeSeries ecgSeries;

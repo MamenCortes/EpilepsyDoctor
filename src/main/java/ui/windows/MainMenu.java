@@ -21,6 +21,8 @@ import java.io.IOException;
  *     <li>When navigating to another panel, the associated panel is updated
  *         before being shown (e.g., {@code DoctorInfo.updateView}).</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class MainMenu extends MenuTemplate {
     private static final long serialVersionUID = 6050014345831062858L;

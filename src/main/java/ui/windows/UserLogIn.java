@@ -30,6 +30,8 @@ import ui.components.*;
  *     <li>Before returning to this panel, the application calls {@link #resetPanel()}
  *         to clear all fields and messages.</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class UserLogIn extends JPanel implements ActionListener{
 
@@ -283,8 +285,8 @@ public class UserLogIn extends JPanel implements ActionListener{
     /**
      * Determines whether the password change dialog can be opened.
      * <p>
-     * This method can contain email validation or database checks. Currently
-     * always returns {@code true}.
+     * This method first checks if the email introduced is of a real user.
+     * If not, it returns false and doesn't allow to change the password.
      * </p>
      *
      * @return {@code true} if password change is allowed

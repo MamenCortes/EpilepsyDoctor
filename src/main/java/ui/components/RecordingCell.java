@@ -9,6 +9,8 @@ import java.awt.*;
 /**
  * List cell renderer for displaying recording information from a {@link Signal}.
  * It formats date and comments using a two-column MigLayout.
+ *
+ *  @author MamenCortes
  */
 public class RecordingCell implements ListCellRenderer<Signal> {
 

@@ -15,6 +15,8 @@ import javax.swing.plaf.basic.ComboPopup;
  * Supports optional hint text and adapts disabled state styling.
  *
  * @param <E> type of elements stored in the combo box
+ *
+ * @author MamenCortes
  */
 public class MyComboBox<E> extends JComboBox<E> {
 

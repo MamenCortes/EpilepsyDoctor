@@ -26,6 +26,8 @@ import java.awt.event.ActionListener;
  *     <li>When navigating back to the main menu, {@link #resetView()} clears
  *         all displayed fields.</li>
  * </ul>
+ *
+ *  @author MamenCortes
  */
 public class DoctorInfo extends JPanel implements ActionListener {
     private Application appMain;
