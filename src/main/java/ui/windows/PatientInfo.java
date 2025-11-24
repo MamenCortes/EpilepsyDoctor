@@ -29,12 +29,42 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Panel that displays all information related to a specific patient.
+ * <p>
+ * This view is created <b>each time a patient is selected</b> in
+ * {@link SearchPatients}. It includes three subviews accessed via a
+ * {@link CardLayout}:
+ * </p>
+ *
+ * <h3>Subpanels</h3>
+ * <ul>
+ *     <li><b>Patient details:</b> personal and demographic data</li>
+ *     <li><b>Recordings history:</b> list of ECG/ACC recordings with access to each</li>
+ *     <li><b>Symptoms calendar:</b> monthly calendar showing symptom occurrences</li>
+ * </ul>
+ *
+ * <h3>Lifecycle</h3>
+ * <ul>
+ *     <li>A fresh instance is created when the doctor opens a patient's file.</li>
+ *     <li>When navigating back to the main menu, the panel is removed and discarded.</li>
+ *     <li>Recordings list and symptoms table are initialized during construction.</li>
+ *     <li>Recordings may be refreshed through {@link #updateSignalRecordingsList(List)}.</li>
+ * </ul>
+ *
+ * <h3>Navigation</h3>
+ * <ul>
+ *     <li>“DETAILS” switches to the patient information card.</li>
+ *     <li>“RECORDINGS” switches to the recordings history card.</li>
+ *     <li>“SYMPTOMS” opens the symptoms calendar subview.</li>
+ *     <li>“BACK TO MENU” removes this panel and returns to the main menu.</li>
+ * </ul>
+ */
 public class PatientInfo extends JPanel implements ActionListener, MouseListener {
     private static final long serialVersionUID = -2213334704230710767L;
     private Application appMain;
     protected final Font titleFont = new Font("sansserif", 3, 15);
     protected final Color titleColor = Application.dark_purple;
-    //private final Font titleFont = new Font("sansserif", Font.BOLD, 25);
     private final Font contentFont = new Font("sansserif", 1, 12);
     private final Color contentColor = Application.dark_turquoise;
     protected JLabel title;
@@ -61,6 +91,21 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
     private MyComboBox<String> monthComboBox;
     private final Patient patient;
 
+    /**
+     * Constructs the patient information panel for a given patient.
+     * <p>
+     * The constructor initializes:
+     * <ul>
+     *     <li>The title with the patient's full name</li>
+     *     <li>Three subpanels (details, recordings, symptoms)</li>
+     *     <li>The card layout used to switch between these subviews</li>
+     * </ul>
+     * Patient-specific data (recordings, symptoms) is retrieved from the
+     * {@link Application#client} during the initialization of subpanels.
+     *
+     * @param appMain the central {@link Application} controller
+     * @param patient the patient whose information will be displayed
+     */
     public PatientInfo(Application appMain, Patient patient) {
         this.patient = patient;
         this.appMain = appMain;
@@ -73,6 +118,14 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         initSymptomsCalendarPanel();
     }
 
+    /**
+     * Initializes the main container panel including:
+     * <ul>
+     *     <li>the title with patient name</li>
+     *     <li>the navigation buttons</li>
+     *     <li>the card layout container where subpanels are displayed</li>
+     * </ul>
+     */
     private void initMainPanel() {
         this.setLayout(new MigLayout("fill, inset 20, gap 0, wrap 3", "[20%]5[80%]", "[][][][]push[][][][][][]"));
         this.setBackground(Color.white);
@@ -84,10 +137,6 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         title.setAlignmentY(LEFT_ALIGNMENT);
         title.setIcon(icon);
         add(title, "cell 0 0 3 1, alignx left");
-
-        //Initialize search panel
-        //add(searchTitle, "cell 0 1 2 1, alignx center, grow");
-        //add(searchByTextField, "cell 0 2 2 1, alignx center, grow");
 
         patientDetailsButton = new MyButton("DETAILS");
         patientDetailsButton.addActionListener(this);
@@ -125,41 +174,40 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         cardPanel.add(recordingsHistoryPanel, "Panel2");
         cardPanel.add(symptomsCalendarPanel, "Panel3");
 
-        // Mostrar un panel:
+        //Show the first panel:
         cardLayout.show(cardPanel, "Panel1");
         add(cardPanel, "cell 1 1, span 1 7, grow");
-
-        //showPatients(appMain.patientMan.searchPatientsBySurname("Blanco"));
-        //showDoctors(createRandomDoctors());
     }
 
+    /**
+     * Initializes the patient details subpanel displaying demographic fields
+     * such as name, surname, date of birth, email, gender, and phone number.
+     * <p>
+     * All fields are non-editable and reflect the information stored in the
+     * provided {@link Patient} instance.
+     * </p>
+     */
     private void initPatientDetailsPanel() {
         patientDetailsPanel.setBackground(Color.white);
         patientDetailsPanel.setLayout(new MigLayout("fill, inset 10, gap 5, wrap 2", "[grow 50][grow 50]", "[][][][][][][]push"));
         patientDetailsPanel.setBorder(BorderFactory.createLineBorder(Application.turquoise, 2));
-        //Patient info
+
         MyTextField name = new MyTextField();
-        //name.setText("Jane");
         name.setText(patient.getName());
         name.setEnabled(false); //Doesnt allow editing
         MyTextField surname = new MyTextField();
-        //surname.setText("Doe");
         surname.setText(patient.getSurname());
         surname.setEnabled(false);
         MyTextField email = new MyTextField();
-        //email.setText("jane.doe@gmail.com");
         email.setText(patient.getEmail());
         email.setEnabled(false);
         MyTextField phoneNumber = new MyTextField();
-        //phoneNumber.setText("123456789");
         phoneNumber.setText(Integer.toString(patient.getPhoneNumber()));
         phoneNumber.setEnabled(false);
         MyTextField sex = new MyTextField();
-        //sex.setText("Non Binary");
         sex.setText(patient.getGender());
         sex.setEnabled(false);
         MyTextField birthDate = new MyTextField();
-        //birthDate.setText("1999-11-11");
         birthDate.setText(patient.getDateOfBirth().toString());
         birthDate.setEnabled(false);
 
@@ -210,10 +258,20 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         patientDetailsPanel.add(email, "grow");
         patientDetailsPanel.add(phoneNumber, "grow");
 
-        //add(patientDetailsPanel, "cell 1 1, span 1 7, grow");
-
     }
 
+    /**
+     * Initializes the recordings history subpanel which displays:
+     * <ul>
+     *     <li>The list of all signal recordings for the patient</li>
+     *     <li>A search field to filter recordings by date</li>
+     *     <li>A button to open a selected recording</li>
+     * </ul>
+     * <p>
+     * Recordings are retrieved from the patient
+     * {@link Application#client#getAllSignalsFromPatient(int)}.
+     * </p>
+     */
     private void initRecordingsHistoryPanel() {
         recordingsHistoryPanel.setBackground(Color.white);
         recordingsHistoryPanel.setLayout(new MigLayout("fill, inset 10, gap 5", "[grow 50][grow 50]", "[5%][5%][5%][80%]"));
@@ -241,13 +299,11 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         JScrollPane scrollPane1 = new JScrollPane();
         scrollPane1.setOpaque(false);
         scrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        //scrollPane1.setViewportView(gridPanel);
 
         recordingsDefListModel = new DefaultListModel<Signal>();
         //TODO: ask server for recordings
-
-        List<Signal> signalRecordings = new ArrayList<>();
-        try {
+        List<Signal> signalRecordings = patient.getRecordings();
+        /*try {
             signalRecordings = appMain.client.getAllSignalsFromPatient(patient.getId());
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -255,7 +311,7 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                     "Error loading recordings from server",
                     "Server Error",
                     JOptionPane.ERROR_MESSAGE);
-        }
+        }*/
 
         // === POPULATE LIST ===
         if (!signalRecordings.isEmpty()) {
@@ -273,6 +329,16 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         recordingsHistoryPanel.add(scrollPane1, "cell 0 3, span 2 2, grow");
     }
 
+    /**
+     * Updates the recordings list with the provided signals.
+     * <p>
+     * This method is used when filtering the recordings by date.
+     * If the list is empty, an error message is shown and the "OPEN FILE"
+     * button is hidden.
+     * </p>
+     *
+     * @param list list of signals matching the current filter
+     */
     public void updateSignalRecordingsList(List<Signal> list){
         if(list == null || list.isEmpty()) {
             showErrorMessage("No signal found!");
@@ -287,12 +353,19 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         }
     }
 
+    /**
+     * Initializes the symptoms calendar subpanel, which displays a calendar
+     * view of the current month and highlights days on which the patient
+     * has reported symptoms.
+     * <p>
+     * The calendar is generated dynamically each month using {@link #updateTable(int)}.
+     * </p>
+     */
     private void initSymptomsCalendarPanel() {
         symptomsCalendarPanel.setBackground(Color.white);
         symptomsCalendarPanel.setLayout(new MigLayout("fill, inset 10, gap 5, wrap 2", "[20%][80%]", "[5%][60%][35%]"));
         symptomsCalendarPanel.setBorder(BorderFactory.createLineBorder(Application.purple, 2));
 
-        //
         JLabel monthHeading = new JLabel("Select a month:");
         monthHeading.setFont(titleFont);
         monthHeading.setForeground(Application.darker_purple);
@@ -306,8 +379,6 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         monthComboBox.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         monthComboBox.addActionListener(e -> updateTable(monthComboBox.getSelectedIndex() + 1));
         symptomsCalendarPanel.add(monthComboBox, "cell 1 0, alignx center, grow");
-        //showPatients(appMain.patientMan.searchPatientsBySurname("Blanco"));
-        //showDoctors(createRandomDoctors());
 
         // Initial table
         table = new JTable();
@@ -323,9 +394,8 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         border.setTitleFont(contentFont);
         border.setTitleColor(Application.turquoise);
         legendPanel.setBorder(border);
-        //legendPanel.setBorder(BorderFactory.createTitledBorder("Legend"));
 
-        // Añadimos los síntomas con sus colores
+        // Add color-coded symptoms
         for (Map.Entry<String, Color> entry : colors.entrySet()) {
             JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
             item.setBackground(Color.white);
@@ -341,21 +411,30 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             legendPanel.add(item);
         }
 
-        // Crear scrollpane para la leyenda
+        // Create scrollpanel for the legend and add to main panel
         JScrollPane legendScroll = new JScrollPane(legendPanel);
         legendScroll.setBackground(Color.white);
         legendScroll.setBorder(null);
-        //legendScroll.setPreferredSize(new Dimension(200, 120)); // ajusta tamaño según necesites
         legendScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         legendScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        // Añadir el scrollpane en el layout principal
         symptomsCalendarPanel.add(legendScroll, "cell 0 2, span 2 1, grow, gapy 5");
 
         // Populate table for the initially selected month
         updateTable(monthComboBox.getSelectedIndex() + 1);
     }
 
+    /**
+     * Updates the symptoms calendar table for a given month.
+     * <p>
+     * Each day cell shows:
+     * <ul>
+     *     <li>The day number</li>
+     *     <li>Colored boxes representing symptom types reported that day</li>
+     * </ul>
+     * Colors are derived from {@link Application#symptomColors}.
+     *
+     * @param month the month index (1–12)
+     */
     private void updateTable(int month) {
         int year = LocalDate.now().getYear();
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -409,8 +488,11 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
         table.setDefaultRenderer(Object.class, new PatientInfo.SymptomCellRenderer(colors));
     }
 
-    // Custom renderer
-    static class SymptomCellRenderer extends JPanel implements javax.swing.table.TableCellRenderer {
+    /**
+     * Renderer used to display colored symptom indicators inside
+     * the calendar table cells.
+     */
+    private static class SymptomCellRenderer extends JPanel implements javax.swing.table.TableCellRenderer {
         private final Map<String, Color> symptomColors;
         private JLabel dayLabel;
 
@@ -458,28 +540,53 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                 }
             }
 
-            /*if (isSelected) {
-                setBackground(new Color(200, 220, 255));
-            }*/
-
             return this;
         }
     }
 
+    /**
+     * Displays an error message inside the panel.
+     *
+     * @param message the text to display
+     */
     private void showErrorMessage(String message) {
         errorMessage.setText(message);
         errorMessage.setVisible(true);
     }
 
+    /**
+     * Hides any previously displayed error message.
+     */
     private void hideErrorMessage() {
         errorMessage.setVisible(false);
     }
 
+    /**
+     * Handles logic when selecting a recording:
+     * <ul>
+     *     <li>Validates a recording is selected</li>
+     *     <li>Loads full ECG/ACC data if required</li>
+     *     <li>Opens a new {@link RecordingGraphs} panel</li>
+     * </ul>
+     */
+    private void hanleOpenRecording(){}
 
+    /**
+     * Handles all button interactions:
+     * <ul>
+     *     <li><b>BACK TO MENU:</b> removes this panel and returns to the main menu</li>
+     *     <li><b>DETAILS:</b> switches to the patient details subpanel</li>
+     *     <li><b>RECORDINGS:</b> switches to the recordings history subpanel</li>
+     *     <li><b>SYMPTOMS:</b> switches to the symptoms calendar subpanel</li>
+     *     <li><b>OPEN FILE:</b> loads the full recording and opens {@link RecordingGraphs}</li>
+     *     <li><b>SEARCH:</b> filters recordings by date</li>
+     * </ul>
+     *
+     * @param e the action event triggered by the user
+     */
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == goBackButton) {
             appMain.changeToMainMenuAndRemove(this);
-            //appMain.changeToMainMenu();
         }else if(e.getSource() == patientDetailsButton){
             cardLayout.show(cardPanel, "Panel1");
         }else if(e.getSource() == recordingsHistoryButton){

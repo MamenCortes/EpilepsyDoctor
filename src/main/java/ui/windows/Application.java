@@ -2,9 +2,7 @@ package ui.windows;
 
 import network.Client;
 import org.example.SymptomType;
-import pojos.Doctor;
-import pojos.Patient;
-import pojos.User;
+import pojos.*;
 import ui.ECGFileReader;
 import ui.components.*;
 
@@ -18,6 +16,34 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Main application window and controller responsible for:
+ * <ul>
+ *     <li>Initializing UI panels and coordinating navigation</li>
+ *     <li>Managing the connection to the remote server</li>
+ *     <li>Handling login state for {@link User} and {@link Doctor}</li>
+ *     <li>Generating shared resources (e.g., symptom colors)</li>
+ * </ul>
+ *
+ * <h3>Panel Management</h3>
+ * Panels such as {@link UserLogIn}, {@link MainMenu}, and other dynamic views
+ * are created and stored in an internal list. The controller provides helper
+ * methods for transitions:
+ * <ul>
+ *     <li>{@link #changeToUserLogIn()}</li>
+ *     <li>{@link #changeToMainMenu()}</li>
+ *     <li>{@link #changeToPanel(JPanel)}</li>
+ *     <li>{@link #changeToMainMenuAndRemove(JPanel)}</li>
+ * </ul>
+ *
+ * <h3>Lifecycle</h3>
+ * <ul>
+ *     <li>The application window is created in {@link #main(String[])}.</li>
+ *     <li>A server IP dialog is shown before the app becomes visible.</li>
+ *     <li>The user must authenticate before accessing other panels.</li>
+ *     <li>If the server disconnects, a new dialog prompts for reconnection.</li>
+ * </ul>
+ */
 public class Application extends JFrame {
     public static Color darker_purple = new Color(114, 82, 153); //#725299
     public static Color dark_purple = new Color(170, 84, 204); //#AA54CC
@@ -26,7 +52,6 @@ public class Application extends JFrame {
     public static Color turquoise = new Color(94, 186, 176); //#5EBAB0
     public static Color light_purple = new Color(239, 232, 255); //#EFE8FF
     public static Color light_turquoise = new Color(193, 252, 244); //#C1FCF4
-    //public static Color light_turquoise = new Color(213, 242, 236); //#d5f2ec
     public static Color lighter_turquoise = new Color(243, 250, 249);//#f3faf9
     public static Color darker_turquoise = new Color(73, 129, 122);
     public static Color dark_turquoise = new Color(52, 152, 143); //#34988f
@@ -45,11 +70,25 @@ public class Application extends JFrame {
     public Doctor doctor;
     public User user;
 
+    /**
+     * Entry point of the graphical application.
+     *
+     * @param args unused
+     */
     public static void main(String[] args) {
         Application app = new Application();
         app.showDialogIntroduceIP(app);
-        //app.setVisible(true);
     }
+
+    /**
+     * Constructs the application window:
+     * <ul>
+     *     <li>Initializes frame and default window settings</li>
+     *     <li>Creates the login panel</li>
+     *     <li>Initializes network client</li>
+     *     <li>Prepares global color mappings for symptoms</li>
+     * </ul>
+     */
     public Application() {
         appPanels = new ArrayList<JPanel>();
         initComponents();
@@ -58,17 +97,20 @@ public class Application extends JFrame {
         logInPanel = new UserLogIn(this);
         appPanels.add(logInPanel);
         logInPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-        client = new Client(this);
-        //initGraph();
         setContentPane(logInPanel);
-        //changeToMainMenu();
+
+        //Initialize the client
+        client = new Client(this);
+
+        //Initialize empty user and doctor
         doctor = new Doctor();
         user = new User();
 
+        //Create map for symptom colors
         symptomColors = generateSymptomColors(SymptomType.class);
     }
 
+    //TODO: Temporal function
     public static double[] importECG() {
         String filePath = "C:/path/to/record.txt";
         filePath = "C:\\Users\\mamen\\OneDrive - Fundación Universitaria San Pablo CEU\\06_BecaPregrado\\2023-2024\\Prototipo_registros\\Prototipo_Day1_2024-02-01_11-20-02.txt";
@@ -90,6 +132,7 @@ public class Application extends JFrame {
         }
     }
 
+    //TODO: Temporal function for testing
     public static double[] importACC() {
         String filePath = "C:/path/to/record.txt";
         filePath = "C:\\Users\\mamen\\OneDrive - Fundación Universitaria San Pablo CEU\\06_BecaPregrado\\2023-2024\\Prototipo_registros\\Prototipo_Day1_2024-02-01_11-20-02.txt";
@@ -105,13 +148,14 @@ public class Application extends JFrame {
         }
     }
 
+    /**
+     * Initializes frame title, icon, default close behavior, and window listeners.
+     */
     public void initComponents() {
         setTitle("Doctor Application");
-        //setSize(602, 436);
         setLayout(null);
         setLocationRelativeTo(null);
         setIconImage(new ImageIcon(getClass().getResource("/icons/night_guardian_mini_500.png")).getImage());
-        //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // handle manually
 
@@ -122,9 +166,12 @@ public class Application extends JFrame {
                 stopEverything();
             }
         });
-
     }
 
+    /**
+     * Stops the network client if connected, disposes of the window,
+     * and terminates the program.
+     */
     private void stopEverything(){
         if(client != null && client.isConnected()){
             client.stopClient(true);
@@ -133,12 +180,22 @@ public class Application extends JFrame {
         System.exit(0);
     }
 
+    /**
+     * Switches to the login panel after hiding all other panels.
+     * Used after logging out.
+     */
     public void changeToUserLogIn() {
         hideAllPanels();
         logInPanel.setVisible(true);
         this.setContentPane(logInPanel);
     }
 
+    /**
+     * Displays the provided panel. If not already present in the internal list,
+     * it is added.
+     *
+     * @param panel the panel to display
+     */
     public void changeToPanel(JPanel panel) {
         hideAllPanels();
         if(!appPanels.contains(panel)) {
@@ -149,6 +206,10 @@ public class Application extends JFrame {
         System.out.println("Number of panels: " + appPanels.size());
     }
 
+    /**
+     * Switches to the main menu panel. If it has never been created,
+     * it is instantiated here.
+     */
     public void changeToMainMenu(){
         hideAllPanels();
         if (mainMenu == null) {
@@ -163,6 +224,12 @@ public class Application extends JFrame {
 
     }
 
+    /**
+     * Returns to the main menu and removes the given panel from memory.
+     * Used primarily for panels that are not meant to be reused (e.g. PatientInfo).
+     *
+     * @param panel the panel to remove and hide
+     */
     public void changeToMainMenuAndRemove(JPanel panel) {
         panel.setVisible(false);
         changeToMainMenu();
@@ -171,6 +238,10 @@ public class Application extends JFrame {
         }
         System.out.println("Number of panels: " + appPanels.size());
     }
+
+    /**
+     * Hides all currently visible panels in preparation for a panel transition.
+     */
     private void hideAllPanels() {
         for (JPanel jPanel : appPanels) {
             if(jPanel.isVisible()) {
@@ -179,6 +250,13 @@ public class Application extends JFrame {
         }
     }
 
+    /**
+     * Generates a unique random color for each enum constant of the provided class.
+     * Used to assign colors to symptoms in the calendar view.
+     *
+     * @param enumClass the enum defining possible symptom types
+     * @return a map from symptom name to randomly generated {@link Color}
+     */
     public static Map<String, Color> generateSymptomColors(Class<? extends Enum<?>> enumClass) {
         Map<String, Color> colorMap = new HashMap<>();
         Random random = new Random();
@@ -198,6 +276,15 @@ public class Application extends JFrame {
         return colorMap;
     }
 
+    /**
+     * Displays a modal dialog requesting the server's IP address.
+     * <p>
+     * If the connection succeeds, the application becomes visible.
+     * If it fails, the user is asked again or can exit the application.
+     * </p>
+     *
+     * @param parentFrame the frame to anchor the dialog
+     */
     private void showDialogIntroduceIP(JFrame parentFrame) {
         MyTextField ipTextField = new MyTextField();
         MyButton okButton = new MyButton("OK");
@@ -214,7 +301,6 @@ public class Application extends JFrame {
         dialog.pack();
         dialog.setLocationRelativeTo(parentFrame);
         askForIP.showErrorMessage("Remember to turn off the computer firewall");
-        //dialog.setSize(400, 200);
 
         okButton.addActionListener(new ActionListener() {
             @Override
@@ -256,6 +342,10 @@ public class Application extends JFrame {
         dialog.setVisible(true);
     }
 
+    /**
+     * Called automatically when the connection to the server is lost.
+     * Shows an error message and prompts the user to enter a new IP.
+     */
     public void onServerDisconnected() {
         SwingUtilities.invokeLater(() -> {
 

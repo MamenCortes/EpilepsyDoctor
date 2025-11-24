@@ -9,7 +9,24 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
+/**
+ * Panel that displays detailed information about the currently logged-in doctor.
+ * <p>
+ * This view is non-editable and is used strictly for displaying profile data.
+ * It is reused across the application's lifecycle. Whenever the panel becomes
+ * visible again, the controller must call {@link #updateView(Doctor)} to refresh
+ * displayed values.
+ * </p>
+ *
+ * <h3>Lifecycle and Reuse</h3>
+ * <ul>
+ *     <li>The panel is instantiated once in {@code MainMenu}.</li>
+ *     <li>When navigated to, {@code updateView()} is always invoked to reload
+ *         the doctor’s information.</li>
+ *     <li>When navigating back to the main menu, {@link #resetView()} clears
+ *         all displayed fields.</li>
+ * </ul>
+ */
 public class DoctorInfo extends JPanel implements ActionListener {
     private Application appMain;
     private JLabel nameHeading;
@@ -23,10 +40,8 @@ public class DoctorInfo extends JPanel implements ActionListener {
     private MyComboBox<String> nextStep;
     private JLabel officeHeading;
     private MyTextField office;
-
     private JLabel title;
     protected String titleText = " ";
-    //protected JButton applyChanges;
     protected JButton goBackButton;
     protected JLabel errorMessage;
     protected JPanel formContainer;
@@ -38,47 +53,53 @@ public class DoctorInfo extends JPanel implements ActionListener {
     private final Font contentFont = new Font("sansserif", 1, 12);
     private final Color contentColor = Application.dark_turquoise;
 
-    //private Doctor doctor;
-
-    //private JDateChooser birthDate;
+    /**
+     * Creates the doctor information panel, initializes layout and UI components.
+     * <p>
+     * Actual values are not set at construction time; instead they are assigned
+     * when {@link #updateView(Doctor)} is called.
+     * </p>
+     *
+     * @param appMain reference to the {@link Application} controller used for
+     *                navigation and data access.
+     */
     public DoctorInfo(Application appMain) {
         this.appMain = appMain;
-        //this.doctor = doctor;
-        //System.out.println(doctor);
         initDoctorInfo();
 
     }
-
+    /**
+     * Initializes the panel structure and fields for displaying doctor data.
+     * <p>
+     * This method only builds the UI; values remain empty until a doctor is
+     * provided via {@link #updateView(Doctor)}.
+     * </p>
+     */
     public void initDoctorInfo() {
         this.titleText = "Physician information";
 
-        //Initialize values
-        //TODO: replace with actual doctor values
+        //Initialize variables
         name = new MyTextField();
-        //name.setText("Dr. Michal Al-Hajjar");
-        //name.setText(doctor.getName()+" "+doctor.getSurname());
         name.setEnabled(false); //Doesnt allow editing
         email = new MyTextField();
-        //email.setText(doctor.getEmail());
         email.setEnabled(false);
         phoneNumber = new MyTextField();
-        //phoneNumber.setText(doctor.getPhoneNumber().toString());
         phoneNumber.setEnabled(false);
         speciality = new MyTextField();
-        //speciality.setText(doctor.getSpeciality());
         speciality.setEnabled(false);
         office = new MyTextField();
-        //office.setText(doctor.getDepartment());
         office.setEnabled(false);
         formContainer = new JPanel();
         initDoctorForm();
     }
 
+    /**
+     * Initializes the form layout and UI components for displaying doctor data:
+     * name, email, phone number, specialty, and office.
+     */
     private void initDoctorForm() {
-        //this.setLayout(new MigLayout("fill, inset 15, gap 0, wrap 4, debug", "[][][][]", "[][][][][][][][][][]"));
         this.setLayout(new MigLayout("fill", "[][][][]", "[][][][][][][][][][]"));
         this.setBackground(Color.white);
-        //this.setBackground(Application.light_purple);
         formContainer.setBackground(Color.white);
         formContainer.setLayout(new MigLayout("fill, inset 10, gap 5, wrap 2", "[grow 10][grow 90]", "[][][][]push"));
 
@@ -90,19 +111,13 @@ public class DoctorInfo extends JPanel implements ActionListener {
         title.setAlignmentY(LEFT_ALIGNMENT);
         title.setIcon(new ImageIcon(getClass().getResource("/icons/doctor-info64_2.png")));
         add(title, "cell 0 0 4 1, alignx left");
-
-        //add(formContainer,  "cell 0 1 4 8, grow, gap 10");
-        //place in column 0, row 1, expand to 4 columns and 8 rows. Gap 10px left and right
         add(formContainer, "cell 0 1 4 8, grow, gap 10 10");
-
-        //add(title1, "cell 0 0, grow");
 
         //ROW 1
         //Name and surname
-        nameHeading = new JLabel("Name*");
+        nameHeading = new JLabel("Name and Surname:*");
         nameHeading.setFont(contentFont);
         nameHeading.setForeground(contentColor);
-        //formContainer.add(nameHeading, "cell 0 0");
         formContainer.add(nameHeading, "grow");
 
         //ROW 2
@@ -113,10 +128,15 @@ public class DoctorInfo extends JPanel implements ActionListener {
         emailHeading.setFont(contentFont);
         emailHeading.setForeground(contentColor);
         formContainer.add(emailHeading, "grow");
-        //add(nameText, "skip 1, grow");
+
+        phoneHeading = new JLabel("Phone Number*");
+        phoneHeading.setFont(contentFont);
+        phoneHeading.setForeground(contentColor);
+        formContainer.add(phoneHeading, "grow");
 
         //ROW 4
         formContainer.add(email, "grow");
+        formContainer.add(phoneNumber, "grow");
 
         //ROW 5
         specHeading = new JLabel("Speciality*");
@@ -125,7 +145,6 @@ public class DoctorInfo extends JPanel implements ActionListener {
         formContainer.add(specHeading, "grow");
         //ROW 6
         formContainer.add(speciality, "grow");
-
 
         //ROW 7
         officeHeading = new JLabel("Office*");
@@ -139,19 +158,7 @@ public class DoctorInfo extends JPanel implements ActionListener {
         //Add buttons
         goBackButton = new MyButton("GO BACK", Application.turquoise, Color.white);
         goBackButton.addActionListener(this);
-        //add(goBackButton,"cell 1 7, left, gapx 10, gapy 5");
         add(goBackButton, "cell 0 9, span, center");
-
-        //applyChanges = new MyButton("APPLY");
-        //applyChanges.addActionListener(this);
-
-        /*errorMessage = new JLabel();
-        errorMessage.setFont(new Font("sansserif", Font.BOLD, 12));
-        errorMessage.setForeground(Color.red);
-        errorMessage.setText("Error message test");
-        //this.add(errorMessage, "cell 0 8, span, left");
-        this.add(errorMessage, "cell 0 1, span, center");
-        errorMessage.setVisible(true);*/
 
     }
 
@@ -163,15 +170,30 @@ public class DoctorInfo extends JPanel implements ActionListener {
         }
     }
 
+    /**
+     * Clears all doctor information fields.
+     * <p>
+     * This is called automatically when navigating back to the main menu to
+     * ensure the panel does not retain outdated data.
+     * </p>
+     */
     private void resetView() {
         name.setText("");
         email.setText("");
         phoneNumber.setText("");
         speciality.setText("");
         office.setText("");
-        //doctor = null;
     }
 
+    /**
+     * Updates the panel fields with the provided doctor information.
+     * <p>
+     * This method must be called every time the panel becomes visible to ensure
+     * correct and up-to-date data is displayed.
+     * </p>
+     *
+     * @param doctor the doctor whose information will be displayed.
+     */
     public void updateView(Doctor doctor) {
         name.setText(doctor.getName()+" "+doctor.getSurname());
         email.setText(doctor.getEmail());

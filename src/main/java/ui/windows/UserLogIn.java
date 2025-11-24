@@ -12,10 +12,28 @@ import net.miginfocom.swing.MigLayout;
 import network.LogInError;
 import ui.components.*;
 
+/**
+ * Panel responsible for handling user authentication into the application.
+ * <p>
+ * This view appears at startup and whenever the user logs out. It provides:
+ * </p>
+ * <ul>
+ *     <li>Email and password input fields</li>
+ *     <li>A "Forgot your password?" workflow</li>
+ *     <li>Error feedback for invalid login attempts</li>
+ * </ul>
+ *
+ * <h3>Lifecycle</h3>
+ * <ul>
+ *     <li>The panel is created once during {@link Application} initialization.</li>
+ *     <li>It remains persistent as part of the application panel stack.</li>
+ *     <li>Before returning to this panel, the application calls {@link #resetPanel()}
+ *         to clear all fields and messages.</li>
+ * </ul>
+ */
 public class UserLogIn extends JPanel implements ActionListener{
 
     private static final long serialVersionUID = 1L;
-    //private PanelCoverLogIn panelCoverLogIn;
     private JPanel panelLogIn;
     private MyButton applyLogIn;
     private MyButton changePassword;
@@ -24,13 +42,14 @@ public class UserLogIn extends JPanel implements ActionListener{
     private MyTextField passwordTxF;
     private MyTextField emailTxFLogIn;
     private MyTextField passwordTxFLogIn;
-    private MyComboBox<String> roleCB;
     private JPanel coverPanel;
-    //private JLabel errorMessage;
-    private JLabel errorMessage2;
+    private JLabel errorMessage;
 
     /**
-     * Create the panel.
+     * Creates the login panel, sets the main layout, initializes all required UI
+     * components and builds both the login form and the graphical cover panel.
+     *
+     * @param appMenu reference to the central {@link Application} controller
      */
     public UserLogIn(Application appMenu) {
         this.appMenu = appMenu;
@@ -39,6 +58,18 @@ public class UserLogIn extends JPanel implements ActionListener{
 
     }
 
+    /**
+     * Initializes all UI elements used in the login screen, including:
+     * <ul>
+     *     <li>Buttons (Log In, Forgot Password)</li>
+     *     <li>Text fields for email and password</li>
+     *     <li>The gradient cover panel with the application logo</li>
+     *     <li>The login form panel</li>
+     * </ul>
+     * <p>
+     * The actual content of the login form is built in {@link #initLogin()}.
+     * </p>
+     */
     private void init() {
         //Initialize buttons
         applyLogIn = new MyButton();
@@ -54,19 +85,13 @@ public class UserLogIn extends JPanel implements ActionListener{
         emailTxFLogIn.addActionListener(this);
         passwordTxFLogIn = new MyTextField();
         passwordTxFLogIn.addActionListener(this);
-        roleCB = new MyComboBox<String>();
-        roleCB.addActionListener(this);
-        //roleCB.addItem("Doctor");
-        roleCB.addItem("Patient");
-        roleCB.addItem("Doctor");
-        roleCB.addItem("Administrator");
 
         //Log In panel
-        errorMessage2 = new JLabel();
-        //errorMessage = new JLabel();
+        errorMessage = new JLabel();
         panelLogIn = new JPanel();
         panelLogIn.setOpaque(true);
         initLogin();
+
         //Cover panel
         coverPanel = new JPanel() {
             @Override
@@ -93,10 +118,15 @@ public class UserLogIn extends JPanel implements ActionListener{
 
         this.add(coverPanel, "grow");
         this.add(panelLogIn, "grow");
-
     }
 
-
+    /**
+     * Builds the login form panel: email input, password input, and buttons.
+     * <p>
+     * Sets styles, icons, and attaches action listeners to the main user inputs.
+     * Error message labels are initialized but hidden by default.
+     * </p>
+     */
     public void initLogin() {
 
         panelLogIn.setBackground(Color.white);
@@ -106,30 +136,25 @@ public class UserLogIn extends JPanel implements ActionListener{
         label.setForeground(Application.dark_purple);
         panelLogIn.add(label);
 
-        //txtEmail = new MyTextField();
         emailTxFLogIn.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/mail.png")));
         emailTxFLogIn.setHint("Email");
         panelLogIn.add(emailTxFLogIn, "w 60%");
-        //MyPasswordField txtPass = new MyPasswordField();
-
-        //txtPass = new MyTextField();
         passwordTxFLogIn.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/pass.png")));
         passwordTxFLogIn.setHint("Password");
         panelLogIn.add(passwordTxFLogIn, "w 60%");
 
         changePassword.setText("Forgot your password ?");
-        //cmdForget.setForeground(new Color(100, 100, 100));
         changePassword.setFont(new Font("sansserif", 1, 12));
         changePassword.setContentAreaFilled(false);
         changePassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
         panelLogIn.add(changePassword);
 
-        errorMessage2 = new JLabel();
-        errorMessage2.setFont(new Font("sansserif", Font.BOLD, 12));
-        errorMessage2.setForeground(Color.red);
-        errorMessage2.setText("Error message test");
-        errorMessage2.setVisible(false);
-        panelLogIn.add(errorMessage2);
+        errorMessage = new JLabel();
+        errorMessage.setFont(new Font("sansserif", Font.BOLD, 12));
+        errorMessage.setForeground(Color.red);
+        errorMessage.setText("Error message test");
+        errorMessage.setVisible(false);
+        panelLogIn.add(errorMessage);
 
         applyLogIn.setText("LOG IN");
         applyLogIn.setBackground(Application.turquoise);
@@ -138,6 +163,17 @@ public class UserLogIn extends JPanel implements ActionListener{
         panelLogIn.add(applyLogIn, "w 40%, h 40");
     }
 
+    /**
+     * Handles button interactions:
+     * <ul>
+     *     <li><b>LOG IN:</b> Attempts authentication via {@link #logIn()}.
+     *         On success, resets the panel and transitions to the main menu.</li>
+     *     <li><b>Forgot password:</b> Validates the email field and opens a
+     *         password change dialog if allowed.</li>
+     * </ul>
+     *
+     * @param e the action event triggered by the user
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
 
@@ -156,7 +192,12 @@ public class UserLogIn extends JPanel implements ActionListener{
         }
     }
 
-
+    /**
+     * Displays the "Change Password" dialog, where the user can enter a new
+     * password twice for confirmation. Validation is handled inside this method.
+     *
+     * @param parentFrame the application frame to anchor the dialog
+     */
     private void showChangePasswordPane(JFrame parentFrame) {
         String emailString = emailTxFLogIn.getText();
         MyTextField password1 = new MyTextField();
@@ -173,7 +214,6 @@ public class UserLogIn extends JPanel implements ActionListener{
         dialog.getContentPane().setBackground(Color.white);
         dialog.pack();
         dialog.setLocationRelativeTo(parentFrame);
-        //dialog.setSize(400, 200);
 
         okButton.addActionListener(new ActionListener() {
             @Override
@@ -182,6 +222,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                 String pass2 = password2.getText();
                 if(pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
                     if(validatePassword(pass2)) {
+                        //TODO: call client to changePasword
                         /*User u = appMenu.jpaUserMan.getUserByEmail(emailString);
                         if(!appMenu.jpaUserMan.changePassword(u, pass2)) {
                             showErrorMessage("Password could't be changed");
@@ -210,7 +251,16 @@ public class UserLogIn extends JPanel implements ActionListener{
     }
 
 
-
+    /**
+     * Attempts to authenticate the user with the server using the e-mail and
+     * password fields.
+     * <p>
+     * On success, returns {@code true}. On failure, an error message is shown
+     * and {@code false} is returned.
+     * </p>
+     *
+     * @return {@code true} if authentication succeeded, otherwise {@code false}
+     */
     private Boolean logIn() {
         String email = emailTxFLogIn.getText();
         String password = passwordTxFLogIn.getText();
@@ -230,10 +280,20 @@ public class UserLogIn extends JPanel implements ActionListener{
         }
     }
 
+    /**
+     * Determines whether the password change dialog can be opened.
+     * <p>
+     * This method can contain email validation or database checks. Currently
+     * always returns {@code true}.
+     * </p>
+     *
+     * @return {@code true} if password change is allowed
+     */
     public Boolean canChangePassword() {
         String email = emailTxFLogIn.getText();
-        /*if(email != null && !email.isBlank()){
-            Boolean isUser = appMenu.jpaUserMan.isUser(email);
+        if(email != null && !email.isBlank()){
+            //TODO: send request to server
+            Boolean isUser = true; //appMenu.jpaUserMan.isUser(email);
             if(isUser) {
                 return true;
             }else {
@@ -243,11 +303,16 @@ public class UserLogIn extends JPanel implements ActionListener{
         }else {
             showErrorMessage("Write the email first");
             return false;
-        }*/
-        return true;
+        }
 
     }
 
+    /**
+     * Validates password complexity: at least 8 characters and at least one digit.
+     *
+     * @param password the password to validate
+     * @return {@code true} if the password meets requirements
+     */
     private Boolean validatePassword(String password) {
         boolean passwordVacia = (Objects.isNull(password)) || password.isEmpty();
         boolean goodPassword=false;
@@ -272,6 +337,12 @@ public class UserLogIn extends JPanel implements ActionListener{
 
     }
 
+    /**
+     * Resets email, password, and error fields.
+     * <p>
+     * Called automatically after login or when returning to the login screen.
+     * </p>
+     */
     private void resetPanel() {
         emailTxF.setText(null);
         emailTxFLogIn.setText(null);
@@ -280,25 +351,21 @@ public class UserLogIn extends JPanel implements ActionListener{
         hideErrorMessage();
     }
 
-    public Boolean validateEmail(String email) {
-        if(!email.isBlank() && email.contains("@")) {
-            String[] emailSplit = email.split("@");
-            if(emailSplit.length >1 && emailSplit[1].equals("hospital.com")){
-                return true;
-            }
-        }
-        //System.out.println("Valid email? "+validEmail);
-        showErrorMessage("Invalid Email");
-        return false;
-    }
-
+    /**
+     * Shows a login-related error message below the login form.
+     *
+     * @param text the message to show
+     */
     public void showErrorMessage(String text){
-        errorMessage2.setVisible(true);
-        errorMessage2.setText(text);
+        errorMessage.setVisible(true);
+        errorMessage.setText(text);
     }
 
+    /**
+     * Hides the login error message.
+     */
     public void hideErrorMessage() {
-        errorMessage2.setVisible(false);
+        errorMessage.setVisible(false);
     }
 
 }
