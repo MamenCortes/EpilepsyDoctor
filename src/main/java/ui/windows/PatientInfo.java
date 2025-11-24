@@ -60,7 +60,8 @@ import java.util.stream.Collectors;
  *     <li>“BACK TO MENU” removes this panel and returns to the main menu.</li>
  * </ul>
  *
- *  @author MamenCortes
+ * @author MamenCortes
+ * @author MartaSanchezdelHoyo
  */
 public class PatientInfo extends JPanel implements ActionListener, MouseListener {
     private static final long serialVersionUID = -2213334704230710767L;
