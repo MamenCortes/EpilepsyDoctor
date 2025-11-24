@@ -1,6 +1,7 @@
 package ui.windows;
 
 import net.miginfocom.swing.MigLayout;
+import org.example.SymptomType;
 import pojos.Patient;
 import pojos.Report;
 import pojos.Signal;
@@ -60,12 +61,12 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
     private MyComboBox<String> monthComboBox;
     private final Patient patient;
 
-    //TODO: implement search algorithms
     public PatientInfo(Application appMain, Patient patient) {
         this.patient = patient;
         this.appMain = appMain;
         titleText = patient.getName()+" "+patient.getSurname();
         colors = Application.symptomColors;
+        System.out.println(patient.getSymptoms().toString());
         initMainPanel();
         initPatientDetailsPanel();
         initRecordingsHistoryPanel();
@@ -385,8 +386,10 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                 for (Report s : patient.getSymptoms()) {
                     LocalDate symptomDate = s.getDate();
                     if (symptomDate.equals(currentDate)) {
-                        if (symptomsPart.length() > 0) symptomsPart.append(",");
-                        symptomsPart.append(s.getSymptom().name()); // si es enum
+                        for (SymptomType type : s.getSymptoms()) {
+                            if (symptomsPart.length() > 0) symptomsPart.append(",");
+                            symptomsPart.append(type.name());
+                        }
                     }
                 }
 
