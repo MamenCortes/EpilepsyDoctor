@@ -7,6 +7,8 @@ import java.awt.*;
 /**
  * A dialog panel displaying a question and two action buttons.
  * It arranges the components using MigLayout and applies custom colors.
+ *
+ * @author MamenCortes
  */
 public class AskQuestionDialog extends JPanel {
     private JLabel errorMessage;

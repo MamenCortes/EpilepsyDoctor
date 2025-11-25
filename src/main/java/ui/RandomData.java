@@ -93,7 +93,7 @@ public class RandomData {
         for (int i = 0; i < numSymptoms; i++) {// Randomly choose Symptoms
             Report sym = new Report();
             sym.setDate(generateRandomLocalDate(random));  // Random date
-            sym.setSymptom(SymptomType.values()[random.nextInt(SymptomType.values().length)]);
+            //sym.setSymptomList(SymptomType.values()[random.nextInt(SymptomType.values().length)]);
             signalReports.add(sym);
         }
         return signalReports;  // Return the list of Reports*/

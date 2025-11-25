@@ -18,6 +18,8 @@ import ui.windows.Application;
  * List cell renderer for displaying patient's information in a custom layout.
  * It formats multiple fields such as name, birthday, contact information,
  * doctor assigned, and status.
+ *
+ *  @author MamenCortes
  */
 public class PatientCell implements ListCellRenderer<Patient> {
 

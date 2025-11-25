@@ -134,5 +134,22 @@ public class Signal {
     public File getZipFile() {
         return zipFile;
     }
+
+    /**
+     * Creates a new {@code Signal} instance from a {@link JsonObject}
+     *
+     * @param json the JSON object containing this {@code Signal} data
+     * @return  a {@code Signal} instance from the {@link JsonObject}
+     *
+     * @see JsonObject
+     */
+    public static Signal fromJson(JsonObject json) {
+        Signal signal = new Signal();
+        signal.setId(json.get("id").getAsInt());
+        signal.setComments(json.get("comments").getAsString());
+        signal.setFrequency(json.get("sampleFrequency").getAsInt());
+        signal.setDate(LocalDate.parse(json.get("date").getAsString()));
+        return signal;
+    }
 }
 

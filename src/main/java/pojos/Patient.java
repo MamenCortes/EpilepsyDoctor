@@ -1,10 +1,14 @@
 package pojos;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.example.SymptomType;
 import ui.RandomData;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Patient {
 
@@ -27,8 +31,10 @@ public class Patient {
         this.phoneNumber = 12345678;
         this.gender = "NonBinay";
         this.dateOfBirth = LocalDate.now();
-        symptoms = RandomData.generateRandomSymptomReports();
-        recordings = RandomData.generateRandomSignalRecordings();
+        //symptoms = RandomData.generateRandomSymptomReports();
+        //recordings = RandomData.generateRandomSignalRecordings();
+        symptoms = new ArrayList<>();
+        recordings = new ArrayList<>();
     }
 
     public Patient(int id, String name, String surname, String email, int phoneNumber, String gender, LocalDate dateOfBirth, int doctor_id) {
@@ -40,8 +46,10 @@ public class Patient {
         this.gender = gender;
         this.dateOfBirth = dateOfBirth;
         this.doctor_id = doctor_id;
-        symptoms = RandomData.generateRandomSymptomReports();
-        recordings = RandomData.generateRandomSignalRecordings();
+        //symptoms = RandomData.generateRandomSymptomReports();
+        //recordings = RandomData.generateRandomSignalRecordings();
+        symptoms = new ArrayList<>();
+        recordings = new ArrayList<>();
     }
 
     public int getId() {
@@ -108,6 +116,21 @@ public class Patient {
         this.doctor_id = doctor_id;
     }
 
+    public void setSymptoms(ArrayList<Report> symptoms) {
+        this.symptoms = symptoms;
+    }
+
+    public void setRecordings(ArrayList<Signal> recordings) {
+        this.recordings = recordings;
+    }
+
+    public ArrayList<Report> getSymptoms() {
+        return symptoms;
+    }
+
+    public ArrayList<Signal> getRecordings() {
+        return recordings;
+    }
 
     @Override
     public String toString() {
@@ -123,14 +146,6 @@ public class Patient {
                 '}';
     }
 
-    public ArrayList<Report> getSymptoms() {
-        return symptoms;
-    }
-
-    public ArrayList<Signal> getRecordings() {
-        return recordings;
-    }
-
     public static Patient fromJason(JsonObject jason) {
         Patient patient = new Patient();
         patient.setId(jason.get("id").getAsInt());
@@ -141,6 +156,30 @@ public class Patient {
         patient.setDateOfBirth(LocalDate.parse(jason.get("dateOfBirth").getAsString()));
         patient.setGender(jason.get("gender").getAsString());
         patient.setDoctor_id(jason.get("doctorId").getAsInt());
+
+        // ----- SIGNALS -----
+        if (jason.has("signals")) {
+            JsonArray signalsJson = jason.getAsJsonArray("signals");
+            ArrayList<Signal> signals = new ArrayList<>();
+
+            for (JsonElement elem : signalsJson) {
+                JsonObject sJson = elem.getAsJsonObject();
+                signals.add(Signal.fromJson(sJson));
+            }
+            patient.setRecordings(signals);
+        }
+
+        // ----- SYMPTOMS / REPORTS -----
+        if (jason.has("reports")) {
+            JsonArray symptomsJson = jason.getAsJsonArray("reports");
+            ArrayList<Report> reports = new ArrayList<>();
+
+            for (JsonElement elem : symptomsJson) {
+                JsonObject rJson = elem.getAsJsonObject();
+                reports.add(Report.fromJson(rJson));
+            }
+            patient.setSymptoms(reports);
+        }
         return patient;
     }
 

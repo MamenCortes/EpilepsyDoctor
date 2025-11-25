@@ -5,12 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
-
 import net.miginfocom.swing.MigLayout;
 import pojos.Patient;
 import ui.components.MyButton;
@@ -18,6 +14,28 @@ import ui.components.MyTextField;
 import ui.components.PatientCell;
 import javax.swing.*;
 
+/**
+ * Panel that allows the doctor to browse and search through their list of patients.
+ * <p>
+ * This view is created once by {@code MainMenu} and reused. It supports:
+ * <ul>
+ *     <li>Displaying all assigned patients</li>
+ *     <li>Filtering patients by surname</li>
+ *     <li>Opening a patient's detailed record</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Lifecycle and Reuse</h3>
+ * <ul>
+ *     <li>The panel is persistent and does not recreate its components.</li>
+ *     <li>Before being shown, {@link #updatePatientDefModel(List)} is always called
+ *         to refresh the displayed patient list.</li>
+ *     <li>When returning to the main menu, {@link #resetPanel()} clears filters,
+ *         search text, and list contents.</li>
+ * </ul>
+ *
+ *  @author MamenCortes
+ */
 public class SearchPatients extends JPanel implements ActionListener, MouseListener {
 
     private static final long serialVersionUID = -2213334704230710767L;
@@ -35,42 +53,30 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
     protected MyButton openFormButton;
     protected JLabel errorMessage;
     protected MyButton goBackButton;
-    //protected Application appMain;
     protected JList<Patient> patientJList;
     protected DefaultListModel<Patient> patientsDefListModel;
     protected List<Patient> allPatients;
 
+    /**
+     * Constructs the search panel and initializes UI components.
+     *
+     * @param appMain reference to the central {@link Application} controller,
+     *                used for data access and panel navigation.
+     */
     public SearchPatients(Application appMain) {
         this.appMain = appMain;
         initMainPanel();
-        /*List<Patient> patients = new ArrayList<>();
-        for(int i = 0; i < 10; i++) {
-            patients.add(RandomData.generateRandomPatient());
-        }
-        showPatients(patients);*/
-        //showPatients(null);
     }
 
-    //TODO: función temporal hasta que creemos las bases de datos de reports
-    private static List<String> generateReports() {
-        List<String> reports = new ArrayList<>();
-
-        // Fecha aleatoria entre 2023 y 2025
-        Random random = new Random();
-        int year = 2023 + random.nextInt(3);  // 2023, 2024 o 2025
-        int dayOfYear = 1 + random.nextInt(365);
-        LocalDate startDate = LocalDate.ofYearDay(year, dayOfYear);
-
-        // Generar 5 reportes, incrementando un día cada vez
-        for (int i = 0; i < 5; i++) {
-            LocalDate date = startDate.plusDays(i);
-            String report = String.format("Report %d: %s", i + 1, date);
-            reports.add(report);
-        }
-
-        return reports;
-    }
-
+    /**
+     * Initializes the main layout, search controls, patient list,
+     * and the buttons for resetting, searching, opening files,
+     * and returning to the main menu.
+     * <p>
+     * This method only initializes UI structure. Patient data is loaded later
+     * through {@link #updatePatientDefModel(List)}.
+     * </p>
+     */
     private void initMainPanel() {
         this.setLayout(new MigLayout("fill, inset 20, gap 0, wrap 3", "[grow 5]5[grow 5]5[grow 40][grow 40]", "[][][][][][][][][][]"));
         this.setBackground(Color.white);
@@ -94,10 +100,7 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         searchByTextField.setHint("ex. Doe");
         add(searchByTextField, "cell 0 2 2 1, alignx center, grow");
 
-        //cancelButton = new MyButton("CANCEL", Application.turquoise, Color.white);
         resetListButton = new MyButton("RESET");
-        //cancelButton.setBackground(new Color(7, 164, 121));
-        //cancelButton.setForeground(new Color(250, 250, 250));
         resetListButton.addActionListener(this);
         add(resetListButton, "cell 0 3, left, gapy 5, grow");
 
@@ -122,11 +125,9 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         this.add(errorMessage, "cell 0 5, span 2, left");
         errorMessage.setVisible(false);
 
-        //JPanel gridPanel = new JPanel(new GridLayout(patients.size(), 0));
         scrollPane1 = new JScrollPane();
         scrollPane1.setOpaque(false);
         scrollPane1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        //scrollPane1.setViewportView(gridPanel);
 
         patientsDefListModel = new DefaultListModel<Patient>();
         patientJList = new JList<Patient>(patientsDefListModel);
@@ -140,6 +141,19 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         add(scrollPane1,  "cell 2 1 2 6, grow, gap 10");
     }
 
+    /**
+     * Updates the patient list with the provided set of patients.
+     * <p>
+     * This method is called every time before showing the panel to ensure
+     * that the displayed list reflects the latest data received from the server.
+     * </p>
+     * <p>
+     * If the list is empty, an error message is shown and the
+     * "OPEN FILE" button is hidden.
+     * </p>
+     *
+     * @param patients list of patients assigned to the doctor.
+     */
     protected void updatePatientDefModel(List<Patient> patients) {
         if(patients == null || patients.isEmpty()) {
             showErrorMessage("No patients found!");
@@ -158,23 +172,53 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
         }
     }
 
+    /**
+     * Displays an error message in the panel.
+     *
+     * @param message the message text to display.
+     */
     private void showErrorMessage(String message) {
         errorMessage.setText(message);
         errorMessage.setVisible(true);
     }
 
+    /**
+     * Hides any previously displayed error message.
+     */
     private void hideErrorMessage() {
         errorMessage.setVisible(false);
     }
 
+    /**
+     * Resets the panel to its initial state.
+     * <p>
+     * This is invoked when navigating back to the main menu and clears:
+     * <ul>
+     *     <li>search text</li>
+     *     <li>stored patient list reference</li>
+     *     <li>displayed patient list</li>
+     * </ul>
+     * </p>
+     */
     private void resetPanel(){
-        //TODO: reset panel when going back to menu
         hideErrorMessage();
         searchByTextField.setText("");
         allPatients = null;
         patientsDefListModel.clear();
     }
 
+    /**
+     * Handles button interactions:
+     * <ul>
+     *     <li><b>BACK TO MENU:</b> Resets the panel and returns to main menu.</li>
+     *     <li><b>OPEN FILE:</b> Opens the selected patient's information panel.</li>
+     *     <li><b>SEARCH:</b> Filters the patient list by surname.</li>
+     *     <li><b>RESET:</b> Restores the original patient list.</li>
+     * </ul>
+     *
+     * @param e the triggered action event.
+     */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == goBackButton) {
             resetPanel();
