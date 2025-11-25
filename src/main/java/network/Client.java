@@ -280,7 +280,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         do {
             response = responseQueue.take();
         } while (!response.get("type").getAsString().equals("REQUEST_SIGNAL_RESPONSE"));
-
+        System.out.println(response);
         String status = response.get("status").getAsString();
         if (status.equals("SUCCESS")) {
             JsonObject data_response = response.getAsJsonObject("signal");
