@@ -610,7 +610,12 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                 protected Signal doInBackground() throws Exception {
                     System.out.println("📥 Entré en doInBackground");
                     // 1) Pedir señal completa al servidor (con ZIP)
-                    Signal fullSignal = appMain.client.getSignalFromId(signal.getId());
+                    Signal fullSignal = null;
+                    try {
+                        fullSignal = appMain.client.getSignalFromId(signal.getId());
+                    } catch (IOException | InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
                     System.out.println("📤 Señal recibida del servidor");
                     // 2) Leer el contenido real del ZIP temporal
                     Signal temp = ECGFileReader.readSignalFromZip(fullSignal.getZipFile(), signal.getFrequency());

@@ -41,7 +41,7 @@ public class ECGFileReader {
     }
 
     public static Signal readSignalFromZip(File zipFile,int freq) throws IOException {
-
+        System.out.println("Soy el servidor y voy a leer el zip "+zipFile.getAbsolutePath());
         // 1) Crear carpeta temporal donde descomprimir
         Path tempDir = Files.createTempDirectory("signal_unzip_");
         File extractedCSV = null;
@@ -66,7 +66,7 @@ public class ECGFileReader {
         if (extractedCSV == null) {
             throw new IOException("CSV file not found inside ZIP");
         }
-
+        System.out.println("CSV extraido en "+extractedCSV.getAbsolutePath());
         // 3) Leer el CSV para obtener ECG + ACC
         return readSignalFromCsv(extractedCSV,freq);
     }
@@ -76,20 +76,19 @@ public class ECGFileReader {
         List<Double> accY = new ArrayList<>();
         List<Double> accZ = new ArrayList<>();
         List<Double> accMagnitude = new ArrayList<>();
-
+        System.out.println("Leyendo CSV "+csvFile.getAbsolutePath());
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
 
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
+                System.out.println("Linea leida: "+line);
+                String[] parts = line.split(";");
 
-                if (parts.length < 4) continue;
+                if (parts.length > 4) continue;
 
                 ecgList.add(Double.parseDouble(parts[0]));
-                accX.add(Double.parseDouble(parts[1]));
-                accY.add(Double.parseDouble(parts[2]));
-                accZ.add(Double.parseDouble(parts[3]));
-                accMagnitude.add((Double.parseDouble(parts[1])+Double.parseDouble(parts[2])+Double.parseDouble(parts[3]))/3);
+                System.out.println("ecg "+parts[0]);
+                accMagnitude.add(Double.parseDouble(parts[1]));
             }
         }
 

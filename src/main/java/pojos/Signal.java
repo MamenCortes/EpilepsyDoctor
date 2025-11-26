@@ -70,7 +70,7 @@ public class Signal {
         String comments = meta.get("comments").getAsString();
         double samplingRate = meta.get("sampling_rate").getAsDouble();
         LocalDate date = LocalDate.parse(meta.get("date").getAsString());
-        String base64Zip = json.get("data").getAsString();
+        String base64Zip = json.get("dataBytes").getAsString();
         byte[] zipBytes = Base64.getDecoder().decode(base64Zip);
         File tempZip = File.createTempFile("signal_" + id + "_", ".zip");
         try (FileOutputStream fos = new FileOutputStream(tempZip)) {
