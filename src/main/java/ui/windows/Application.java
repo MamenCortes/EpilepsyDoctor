@@ -1,5 +1,8 @@
 package ui.windows;
 
+import Events.ServerDisconnected;
+import Events.UIEventBus;
+import com.google.common.eventbus.Subscribe;
 import network.Client;
 import pojos.SymptomType;
 import pojos.*;
@@ -102,7 +105,7 @@ public class Application extends JFrame {
         setContentPane(logInPanel);
 
         //Initialize the client
-        client = new Client(this);
+        client = new Client();
 
         //Initialize empty user and doctor
         doctor = new Doctor();
@@ -110,6 +113,9 @@ public class Application extends JFrame {
 
         //Create map for symptom colors
         symptomColors = generateSymptomColors(SymptomType.class);
+
+        //Events
+        UIEventBus.BUS.register(this);
     }
 
     //TODO: Temporal function
@@ -348,7 +354,8 @@ public class Application extends JFrame {
      * Called automatically when the connection to the server is lost.
      * Shows an error message and prompts the user to enter a new IP.
      */
-    public void onServerDisconnected() {
+    @Subscribe
+    public void onServerDisconnected(ServerDisconnected event) {
         SwingUtilities.invokeLater(() -> {
 
             JOptionPane.showMessageDialog(

@@ -1,14 +1,13 @@
 package network;
 
+import Events.ServerDisconnected;
+import Events.UIEventBus;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import encryption.*;
-import pojos.Doctor;
-import pojos.Patient;
-import pojos.Signal;
-import pojos.User;
+import pojos.*;
 import ui.windows.Application;
 
 import javax.crypto.SecretKey;
@@ -25,9 +24,10 @@ public class Client {
     Socket socket;
     PrintWriter out;
     BufferedReader in;
-    private Application appMain;
+    //TODO: eliminate references to appMain from Client
     private Gson gson = new Gson();
     private volatile Boolean running = false;
+    private User user;
     //Estructura diseñada para comunicar threads entre sí de manera segura y sincronizada
     //permite que un thread meta mensajes en la cola (con put())
     //Y que otro thread los reciba (con take() o poll())
@@ -37,8 +37,7 @@ public class Client {
     private PublicKey serverPublicKey;
     private SecretKey AESkey;
 
-    public Client(Application appMain) {
-        this.appMain = appMain;
+    public Client() {
         //generates the public and private key pair
         try {
             this.keyPair = RSAKeyManager.generateKeyPair();
@@ -187,7 +186,8 @@ public class Client {
 
         // Notify UI ONLY if the server disconnected
         if (!initiatedByClient) {
-            appMain.onServerDisconnected();
+            //appMain.onServerDisconnected();
+            UIEventBus.BUS.post(new ServerDisconnected());
         }
 
         releaseResources(out, in, socket);
@@ -198,7 +198,7 @@ public class Client {
         out.println("Hi! I'm a new client!\n");
     }
 
-    public void login(String email, String password) throws IOException, InterruptedException, LogInError {
+    public AppData login(String email, String password) throws IOException, InterruptedException, LogInError {
         //String message = "LOGIN;" + email + ";" + password;
 
         Map<String, Object> data = new HashMap<>();
@@ -222,6 +222,7 @@ public class Client {
             response = responseQueue.take();
         } while (!response.get("type").getAsString().equals("LOGIN_RESPONSE"));
 
+        AppData appData = new AppData();
         // Check response
         String status = response.get("status").getAsString();
         if (status.equals("SUCCESS")) {
@@ -233,7 +234,9 @@ public class Client {
 
             if(role.equals("Doctor")){
                 User user = new User(id, email, password, role);
-                appMain.user = user;
+                //appMain.user = user;
+                this.user = user;
+                appData.setUser(user);
 
                 //Request doctor data
                 message.clear();
@@ -259,7 +262,9 @@ public class Client {
                 }
                 Doctor doctor = Doctor.fromJason(response.getAsJsonObject("doctor"));
                 System.out.println(doctor);
-                appMain.doctor = doctor;
+                //appMain.doctor = doctor;
+                appData.setDoctor(doctor);
+                return appData;
             }else{
                 throw new LogInError(response.get("message").getAsString());
             }
@@ -271,7 +276,7 @@ public class Client {
     public List<Patient> getPatientsFromDoctor(int doctor_id) throws IOException, InterruptedException {
         Map<String, Object> data = new HashMap<>();
         data.put("doctor_id", doctor_id);
-        data.put("user_id", appMain.user.getId());
+        if(user != null)data.put("user_id", user.getId());
 
         Map<String, Object> message = new HashMap<>();
         message.put("type", "REQUEST_PATIENTS_FROM_DOCTOR");
@@ -304,7 +309,7 @@ public class Client {
 public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException, InterruptedException {
         Map<String, Object> data = new HashMap<>();
         data.put("patient_id", patient_id);
-        data.put("user_id", appMain.user.getId());
+        if(user != null)data.put("user_id", user.getId());
 
         Map<String, Object> message = new HashMap<>();
         message.put("type", "REQUEST_PATIENT_SIGNALS");
@@ -337,7 +342,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
     public Signal getSignalFromId (int signal_id) throws IOException, InterruptedException {
         Map<String, Object> data = new HashMap<>();
         data.put("signal_id", signal_id);
-        data.put("user_id", appMain.user.getId());
+        if(user != null)data.put("user_id", user.getId());
         Map<String, Object> message = new HashMap<>();
         message.put("type", "REQUEST_SIGNAL");
         message.put("data", data);
@@ -366,7 +371,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         data.put("patient_id", patient_id);
         data.put("signal_id", signal.getId());
         data.put("comments", signal.getComments());
-        data.put("user_id", appMain.user.getId());
+        if(user != null)data.put("user_id", user.getId());
 
         Map<String, Object> message = new HashMap<>();
         message.put("type", "SAVE_COMMENTS_SIGNAL");
@@ -396,7 +401,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
 
         //"localhost", 9009
         //Client client = new Client("localhost", 9009, new Application());
-        Client client = new Client(new Application());
+        Client client = new Client();
 
 
         Scanner scanner = new Scanner(System.in); // create a Scanner for console input

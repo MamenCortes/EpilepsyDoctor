@@ -321,6 +321,8 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             for (Signal s : signalRecordings) {
                 recordingsDefListModel.addElement(s);
             }
+        }else{
+            showErrorMessage("No signal recordings found!");
         }
         recordingsList = new JList<Signal>(recordingsDefListModel);
         recordingsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

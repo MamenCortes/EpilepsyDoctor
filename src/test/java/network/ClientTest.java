@@ -1,5 +1,6 @@
 package network;
 
+import Events.ServerDisconnected;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+//TODO: check tests
 public class ClientTest {
 
     Client client;
@@ -41,7 +43,7 @@ public class ClientTest {
         in = mock(BufferedReader.class);
         out = mock(PrintWriter.class);
 
-        client = new Client(app);
+        client = new Client();
 
         setField(client, "socket", socket);
         setField(client, "in", in);
@@ -63,7 +65,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
         // Cliente es un spy para interceptar new Socket(...)
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         // Cuando connect llame a new Socket(ip,port) → devolver mockSocket
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
@@ -89,7 +91,7 @@ public class ClientTest {
         );
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getInputStream()).thenReturn(mockInput);
@@ -123,7 +125,7 @@ public class ClientTest {
 
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         // Mock socket and out
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
@@ -137,7 +139,7 @@ public class ClientTest {
 
         String sent = mockOutput.toString();
         assertTrue(sent.contains("STOP_CLIENT"));
-        verify(app, never()).onServerDisconnected();   // UI must NOT be notified
+        verify(app, never()).onServerDisconnected(new ServerDisconnected());   // UI must NOT be notified
     }
 
     @Test
@@ -145,7 +147,7 @@ public class ClientTest {
 
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
@@ -157,7 +159,7 @@ public class ClientTest {
 
         String sent = mockOutput.toString();
         assertFalse(sent.contains("STOP_CLIENT"));     // not client-initiated
-        verify(app).onServerDisconnected();            // UI must be informed
+        verify(app).onServerDisconnected(new ServerDisconnected());            // UI must be informed
     }
 
     @Test
@@ -168,7 +170,7 @@ public class ClientTest {
         );
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getInputStream()).thenReturn(mockInput);
@@ -179,7 +181,7 @@ public class ClientTest {
         // Give the listener time to process the STOP_CLIENT
         Thread.sleep(100);
 
-        verify(app).onServerDisconnected();     // UI notified
+        verify(app).onServerDisconnected(new ServerDisconnected());     // UI notified
     }
 
     @Test
@@ -189,7 +191,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         // Mock socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
@@ -230,7 +232,7 @@ public class ClientTest {
     @Test
     void testGetPatientsFromDoctorError() throws Exception {
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
@@ -257,7 +259,7 @@ public class ClientTest {
     @Test
     void testSaveCommentsSuccess() throws Exception {
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
@@ -287,7 +289,7 @@ public class ClientTest {
     @Test
     void testSaveCommentsError() throws Exception {
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
@@ -320,7 +322,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
@@ -387,7 +389,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         // Mock socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
@@ -423,7 +425,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
@@ -488,7 +490,7 @@ public class ClientTest {
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
-        Client client = spy(new Client(app));
+        Client client = spy(new Client());
 
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
