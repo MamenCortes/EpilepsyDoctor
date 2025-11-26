@@ -1,6 +1,6 @@
 package network;
 
-import Events.ServerDisconnected;
+import Events.ServerDisconnectedEvent;
 import Events.UIEventBus;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import encryption.*;
 import pojos.*;
-import ui.windows.Application;
 
 import javax.crypto.SecretKey;
 import java.io.*;
@@ -120,7 +119,8 @@ public class Client {
                     JsonObject decryptedRequest = request;
                     if (typeDecrypted.equals("ENCRYPTED")){
                         String encryptedData = request.get("data").getAsString();
-                        String decryptedJson = AESUtil.decrypt(encryptedData, AESkey);
+                        String decryptedJson = encryptedData;
+                        decryptedJson = AESUtil.decrypt(encryptedData, AESkey);
                         System.out.println("This is the decrypted json: "+decryptedJson);
                         decryptedRequest = gson.fromJson(decryptedJson,JsonObject.class);
                         typeDecrypted = decryptedRequest.get("type").getAsString();
@@ -128,14 +128,14 @@ public class Client {
                     System.out.println("\nThis is the decrypted type received in Client: "+typeDecrypted);
 
 
-                    if (type.equals("STOP_CLIENT")) {
+                    if (typeDecrypted.equals("STOP_CLIENT")) {
                         System.out.println("Server requested shutdown");
                         stopClient(false);
                         break;
                     }
 
                     try {
-                        responseQueue.put(request);
+                        responseQueue.put(decryptedRequest);
                     }catch (InterruptedException e){
                         JsonObject jsonObject = new JsonObject();
                         jsonObject.addProperty("type", "LOGIN_REQUEST_RESPONSE");
@@ -187,7 +187,8 @@ public class Client {
         // Notify UI ONLY if the server disconnected
         if (!initiatedByClient) {
             //appMain.onServerDisconnected();
-            UIEventBus.BUS.post(new ServerDisconnected());
+            System.out.println("Server disconnected");
+            UIEventBus.BUS.post(new ServerDisconnectedEvent());
         }
 
         releaseResources(out, in, socket);
@@ -220,6 +221,9 @@ public class Client {
         JsonObject response;
         do {
             response = responseQueue.take();
+            if(response.get("type").getAsString().equals("ENCRYPTED")){
+                throw new IOException("Dencription failed");
+            }
         } while (!response.get("type").getAsString().equals("LOGIN_RESPONSE"));
 
         AppData appData = new AppData();

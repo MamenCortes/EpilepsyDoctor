@@ -1,11 +1,10 @@
 package network;
 
-import Events.ServerDisconnected;
+import Events.ServerDisconnectedEvent;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
 import pojos.Doctor;
 import pojos.Patient;
 import pojos.Signal;
@@ -18,7 +17,6 @@ import java.net.Socket;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -139,7 +137,7 @@ public class ClientTest {
 
         String sent = mockOutput.toString();
         assertTrue(sent.contains("STOP_CLIENT"));
-        verify(app, never()).onServerDisconnected(new ServerDisconnected());   // UI must NOT be notified
+        verify(app, never()).onServerDisconnected(new ServerDisconnectedEvent());   // UI must NOT be notified
     }
 
     @Test
@@ -159,7 +157,7 @@ public class ClientTest {
 
         String sent = mockOutput.toString();
         assertFalse(sent.contains("STOP_CLIENT"));     // not client-initiated
-        verify(app).onServerDisconnected(new ServerDisconnected());            // UI must be informed
+        verify(app).onServerDisconnected(new ServerDisconnectedEvent());            // UI must be informed
     }
 
     @Test
@@ -181,7 +179,7 @@ public class ClientTest {
         // Give the listener time to process the STOP_CLIENT
         Thread.sleep(100);
 
-        verify(app).onServerDisconnected(new ServerDisconnected());     // UI notified
+        verify(app).onServerDisconnected(new ServerDisconnectedEvent());     // UI notified
     }
 
     @Test

@@ -1,8 +1,9 @@
 package ui.windows;
 
-import Events.ServerDisconnected;
+import Events.ServerDisconnectedEvent;
 import Events.UIEventBus;
 import com.google.common.eventbus.Subscribe;
+import net.miginfocom.swing.MigLayout;
 import network.Client;
 import pojos.SymptomType;
 import pojos.*;
@@ -355,15 +356,17 @@ public class Application extends JFrame {
      * Shows an error message and prompts the user to enter a new IP.
      */
     @Subscribe
-    public void onServerDisconnected(ServerDisconnected event) {
+    public void onServerDisconnected(ServerDisconnectedEvent event) {
         SwingUtilities.invokeLater(() -> {
 
-            JOptionPane.showMessageDialog(
+            /*JOptionPane.showMessageDialog(
                     null,
                     "The conexion with the server was interrupted.",
                     "Conexion error",
                     JOptionPane.ERROR_MESSAGE
-            );
+            );*/
+            System.out.println("The conexion with the server was interrupted");
+            showMessageDialog(this, "The conexion with the server was interrupted");
 
             // Espera a que el message dialog finalice y luego lanza el siguiente diálogo
             SwingUtilities.invokeLater(() -> {
@@ -371,5 +374,48 @@ public class Application extends JFrame {
                 System.out.println("Requested new IP address");
             });
         });
+    }
+
+    /**
+     * Utility method to display a custom message dialog using a Night Guardian–styled window.
+     *
+     * @param parentFrame the parent frame for centering the dialog
+     * @param message the message to display
+     */
+    public static void showMessageDialog(JFrame parentFrame, String message) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new MigLayout("wrap, fill, inset 15", "[center]", "push[]25[]push"));
+        panel.setBackground(Color.white);
+        panel.setPreferredSize(new Dimension(250, 150));
+
+        JLabel label = new JLabel(message);
+        label.setFont(new Font("sansserif", 1, 25));
+        label.setForeground(Application.dark_purple);
+
+        JTextArea labelLikeText = new JTextArea(message);
+        labelLikeText.setLineWrap(true);
+        labelLikeText.setWrapStyleWord(true);
+        labelLikeText.setEditable(false);
+        labelLikeText.setOpaque(false); // looks like a JLabel
+        labelLikeText.setFont(new Font("sansserif", 1, 20));
+        labelLikeText.setBackground(Color.white);
+        labelLikeText.setForeground(Application.dark_purple);
+        panel.add(labelLikeText, "growx, center, wrap");
+
+        MyButton okButton = new MyButton("OK", Application.turquoise, Color.white);
+        panel.add(okButton, "center");
+
+        JDialog dialog = new JDialog(parentFrame, "Message dialog", true); //dont allow interacting with other panels at the same time
+        dialog.getContentPane().add(panel);
+        dialog.getContentPane().setBackground(Color.white);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {dialog.dispose();}
+        });
+
+        dialog.setVisible(true);
     }
 }

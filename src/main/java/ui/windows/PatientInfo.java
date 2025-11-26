@@ -598,6 +598,25 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             cardLayout.show(cardPanel, "Panel2");
         }else if(e.getSource() == symptomsCalendarButton){
             cardLayout.show(cardPanel, "Panel3");
+        }else if(e.getSource() == searchButton) {
+            if(patient.getRecordings().isEmpty()) {
+                showErrorMessage("No patient recordings found!");
+                return;
+            }
+            errorMessage.setVisible(false);
+            String input = searchByTextField.getText();
+            System.out.println(input);
+            List<Signal> filteredRecordings = patient.getRecordings().stream()
+                    .filter(p -> p.getDate().toString().contains(input))
+                    .collect(Collectors.toList());
+
+            updateSignalRecordingsList(filteredRecordings);
+            if(filteredRecordings.isEmpty()) {
+                showErrorMessage("No Signals found");
+                openRecordingButton.setVisible(false);
+            }else {
+                openRecordingButton.setVisible(true);
+            }
         }else if(e.getSource() == openRecordingButton){
             Signal signal = recordingsList.getSelectedValue();
             if(signal == null) {
@@ -646,21 +665,6 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
                 }
 
             }; worker.execute();
-        }if(e.getSource() == searchButton) {
-            errorMessage.setVisible(false);
-            String input = searchByTextField.getText();
-            System.out.println(input);
-            List<Signal> filteredRecordings = patient.getRecordings().stream()
-                    .filter(p -> p.getDate().toString().contains(input))
-                    .collect(Collectors.toList());
-
-            updateSignalRecordingsList(filteredRecordings);
-            if(filteredRecordings.isEmpty()) {
-                showErrorMessage("No Signals found");
-                openRecordingButton.setVisible(false);
-            }else {
-                openRecordingButton.setVisible(true);
-            }
         }
 
     }

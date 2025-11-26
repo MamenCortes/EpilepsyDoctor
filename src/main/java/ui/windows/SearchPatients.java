@@ -233,6 +233,10 @@ public class SearchPatients extends JPanel implements ActionListener, MouseListe
                 appMain.changeToPanel(new PatientInfo(appMain, patient));
             }
         }if(e.getSource() == searchButton) {
+            if(allPatients.isEmpty()) {
+                showErrorMessage("No patients found!");
+                return;
+            }
             errorMessage.setVisible(false);
             String input = searchByTextField.getText();
             System.out.println(input);

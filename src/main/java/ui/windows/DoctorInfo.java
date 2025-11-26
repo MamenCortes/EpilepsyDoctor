@@ -103,7 +103,7 @@ public class DoctorInfo extends JPanel implements ActionListener {
         this.setLayout(new MigLayout("fill", "[][][][]", "[][][][][][][][][][]"));
         this.setBackground(Color.white);
         formContainer.setBackground(Color.white);
-        formContainer.setLayout(new MigLayout("fill, inset 10, gap 5, wrap 2", "[grow 10][grow 90]", "[][][][]push"));
+        formContainer.setLayout(new MigLayout("fill, inset 10, gap 5, wrap 2", "[grow 10][grow 90]", "[][][][][]push"));
 
         //Add Title
         title = new JLabel(titleText);
@@ -130,14 +130,13 @@ public class DoctorInfo extends JPanel implements ActionListener {
         emailHeading.setFont(contentFont);
         emailHeading.setForeground(contentColor);
         formContainer.add(emailHeading, "grow");
+        formContainer.add(email, "grow");
 
+        //ROW 4
         phoneHeading = new JLabel("Phone Number*");
         phoneHeading.setFont(contentFont);
         phoneHeading.setForeground(contentColor);
         formContainer.add(phoneHeading, "grow");
-
-        //ROW 4
-        formContainer.add(email, "grow");
         formContainer.add(phoneNumber, "grow");
 
         //ROW 5
@@ -145,16 +144,13 @@ public class DoctorInfo extends JPanel implements ActionListener {
         specHeading.setFont(contentFont);
         specHeading.setForeground(contentColor);
         formContainer.add(specHeading, "grow");
-        //ROW 6
         formContainer.add(speciality, "grow");
 
         //ROW 7
-        officeHeading = new JLabel("Office*");
+        officeHeading = new JLabel("Hospital/Department*");
         officeHeading.setFont(contentFont);
         officeHeading.setForeground(contentColor);
         formContainer.add(officeHeading, "grow");
-
-        //ROW 8
         formContainer.add(office, "grow"); //TODO create birth date chooser
 
         //Add buttons
