@@ -1,6 +1,5 @@
 package ui;
 
-import org.example.SymptomType;
 import pojos.*;
 import java.time.LocalDate;
 import java.util.ArrayList;

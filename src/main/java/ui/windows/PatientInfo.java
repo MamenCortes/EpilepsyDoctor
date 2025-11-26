@@ -1,7 +1,7 @@
 package ui.windows;
 
 import net.miginfocom.swing.MigLayout;
-import org.example.SymptomType;
+import pojos.SymptomType;
 import pojos.Patient;
 import pojos.Report;
 import pojos.Signal;

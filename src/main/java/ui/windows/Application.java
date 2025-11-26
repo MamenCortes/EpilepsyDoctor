@@ -1,7 +1,7 @@
 package ui.windows;
 
 import network.Client;
-import org.example.SymptomType;
+import pojos.SymptomType;
 import pojos.*;
 import ui.ECGFileReader;
 import ui.components.*;

@@ -1,4 +1,4 @@
-package org.example;
+package pojos;
 
 public enum SymptomType {
     Muscle_Stiffness,

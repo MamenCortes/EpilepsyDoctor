@@ -2,7 +2,6 @@ package pojos;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.example.SymptomType;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
