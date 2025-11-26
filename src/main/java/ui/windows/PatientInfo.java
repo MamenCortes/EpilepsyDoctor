@@ -602,65 +602,50 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
             Signal signal = recordingsList.getSelectedValue();
             if(signal == null) {
                 showErrorMessage("No signal Selected");
-            }else {
-                //showErrorMessage("Selected signal: " + patient.getName()+" "+patient.getSurname());
-                //TODO: request real signal to the server si no se ha pedido ya
-                //TODO: show loading gif while downloading
-//                image.setIcon(uploadingGif);
-//                showFeedbackMessage(errorMessage2, "Downloading signal from server...");
-                SwingWorker<Signal, Void> worker = new SwingWorker<>() {
-
-                    @Override
-                    protected Signal doInBackground() throws Exception {
-                        // 1) Pedir señal completa al servidor (con ZIP)
-                        Signal fullSignal = appMain.client.getSignalFromId(signal.getId());
-
-                        // 2) Leer el contenido real del ZIP temporal
-                        Signal temp = ECGFileReader.readSignalFromZip(fullSignal.getZipFile());
-
-                        fullSignal.setEcg(temp.getEcg());
-                        fullSignal.setAcc(temp.getAcc());
-                        fullSignal.setFrequency(temp.getFrequency());
-
-                        return fullSignal;
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            Signal fullSignal = get();
-//                              Todo: hide loading gif, show success message
-//                            image.setIcon(null);
-//                            showFeedbackMessage(errorMessage2, "Signal ready!");
-
-//                            appMain.changeToPanel(
-//                                    new RecordingGraphs(appMain, RecordingsHistory.this, fullSignal, patient)
-//                            );
-
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            showErrorMessage("Error downloading or reading signal");
-                        }
-                    }
-                };
-
-                worker.execute();
-
-                //signal.setEcg(Application.importECG());
-                //signal.setAcc(Application.importACC());
-                //signal.setFrequency(100);
-                try {
-                    Signal temp = ECGFileReader.readSignalFromFile("C:/Users/mamen/Documents/OpenSignals (r)evolution/files/ecg-acc-mamen-11-07_12-12-54.txt");
-                    signal.setEcg(temp.getEcg());
-                    signal.setAcc(temp.getAcc());
-                    signal.setFrequency(temp.getFrequency());
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-                //resetPanel();
-                appMain.changeToPanel(new RecordingGraphs(appMain, this, signal, patient));
-                //appMain.changeToAdmitPatient(patient);
+                return;
             }
+            //TODO ventana de espera cuando se esta descargando el file
+           // image.setIcon(uploadingGif);
+            //showFeedbackMessage(errorMessage2,"Downloading signal from server...");
+            SwingWorker<Signal, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Signal doInBackground() throws Exception {
+                    System.out.println("📥 Entré en doInBackground");
+                    // 1) Pedir señal completa al servidor (con ZIP)
+                    Signal fullSignal = null;
+                    try {
+                        fullSignal = appMain.client.getSignalFromId(signal.getId());
+                    } catch (IOException | InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    System.out.println("📤 Señal recibida del servidor");
+                    // 2) Leer el contenido real del ZIP temporal
+                    Signal temp = ECGFileReader.readSignalFromZip(fullSignal.getZipFile(), signal.getFrequency());
+                    fullSignal.setEcg(temp.getEcg());
+                    fullSignal.setAcc(temp.getAcc());
+                    fullSignal.setFrequency(temp.getFrequency());
+                    return fullSignal;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        Signal fullSignal = get();
+                        //TODO quitar la ventana de descarga cuando se haya descargado finalmente
+                       // image.setIcon(null);
+                       // showFeedbackMessage(errorMessage2, "Signal ready!");
+                        // TODO enseñar la señal en una nueva ventana
+                        appMain.changeToPanel(new RecordingGraphs(appMain, PatientInfo.this , fullSignal,patient));
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        showErrorMessage("Error downloading or reading signal");
+                        return; // evitar ventana vacía
+                    }
+
+                }
+
+            }; worker.execute();
         }if(e.getSource() == searchButton) {
             errorMessage.setVisible(false);
             String input = searchByTextField.getText();

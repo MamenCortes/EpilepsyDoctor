@@ -357,9 +357,23 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
 
         String status = response.get("status").getAsString();
         if (status.equals("SUCCESS")) {
-            JsonObject data_response = response.getAsJsonObject("signal");
-            Signal signal = Signal.fromJasonWithZip(data_response);
-            System.out.println("Received signal: " + signal);
+            Signal signal = null;
+            try {
+                JsonObject meta = response.get("metadata").getAsJsonObject();
+                JsonObject metadata= new JsonObject();
+                metadata.addProperty("signal_id", meta.get("signal_id").getAsInt());
+                metadata.addProperty("patient_id", meta.get("patient_id").getAsInt());
+                metadata.addProperty("sampling_rate", meta.get("sampling_rate").getAsDouble());
+                metadata.addProperty("comments", meta.get("comments").getAsString());
+                metadata.addProperty("date", meta.get("date").getAsString());
+                JsonObject data_response = new JsonObject();
+                data_response.add("metadata", metadata);
+                data_response.addProperty("dataBytes", response.get("dataBytes").getAsString());
+                data_response.addProperty("filename", response.get("filename").getAsString());
+                signal = Signal.fromJasonWithZip(data_response);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             return signal;
         }else {
             throw new ClientServerCommunicationError(response.get("message").getAsString());

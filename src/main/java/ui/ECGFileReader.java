@@ -40,73 +40,8 @@ public class ECGFileReader {
         return result;
     }
 
-    public static double[] readACCFromFile(String path) throws IOException {
-        List<Double> ecgValues = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            String line;
-            boolean dataSection = false;
-
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("#")) {
-                    if (line.contains("EndOfHeader")) dataSection = true;
-                    continue;
-                }
-                if (!dataSection || line.trim().isEmpty()) continue;
-
-                String[] parts = line.split("\t");
-                if (parts.length >= 5) {
-                    ecgValues.add(Double.parseDouble(parts[6]));
-                }
-            }
-        }
-
-        // Convert to primitive array
-        double[] result = new double[ecgValues.size()];
-        for (int i = 0; i < ecgValues.size(); i++) result[i] = ecgValues.get(i);
-        return result;
-    }
-
-    public static Signal readSignalFromFile(String path) throws IOException {
-        List<Double> ecgValues = new ArrayList<>();
-        List<Double> accValues = new ArrayList<>();
-        Signal signal = new Signal();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            String line;
-            boolean dataSection = false;
-
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("# {")) {
-                    // Remove the '#' and any spaces
-                    String jsonPart = line.substring(1).trim();
-                    signal.setFrequency(getSamplingRate(jsonPart));
-                }
-                if (line.startsWith("#")) {
-                    if (line.contains("EndOfHeader")) dataSection = true;
-                    continue;
-                }
-                if (!dataSection || line.trim().isEmpty()) continue;
-
-                String[] parts = line.split("\t");
-                if (parts.length >= 5) {
-                    ecgValues.add(Double.parseDouble(parts[5]));
-                    accValues.add(Double.parseDouble(parts[6]));
-                }
-            }
-        }
-
-        // Convert to primitive array
-        double[] result = new double[ecgValues.size()];
-        for (int i = 0; i < ecgValues.size(); i++) result[i] = ecgValues.get(i);
-        signal.setEcg(result);
-        double[] acc = new double[accValues.size()];
-        for (int i = 0; i < accValues.size(); i++) acc[i] = accValues.get(i);
-        signal.setAcc(acc);
-        return signal;
-    }
-    public static Signal readSignalFromZip(File zipFile) throws IOException {
-
+    public static Signal readSignalFromZip(File zipFile,int freq) throws IOException {
+        System.out.println("Soy el servidor y voy a leer el zip "+zipFile.getAbsolutePath());
         // 1) Crear carpeta temporal donde descomprimir
         Path tempDir = Files.createTempDirectory("signal_unzip_");
         File extractedCSV = null;
@@ -131,38 +66,37 @@ public class ECGFileReader {
         if (extractedCSV == null) {
             throw new IOException("CSV file not found inside ZIP");
         }
-
+        System.out.println("CSV extraido en "+extractedCSV.getAbsolutePath());
         // 3) Leer el CSV para obtener ECG + ACC
-        return readSignalFromCsv(extractedCSV);
+        return readSignalFromCsv(extractedCSV,freq);
     }
-    public static Signal readSignalFromCsv(File csvFile) throws IOException {
+    public static Signal readSignalFromCsv(File csvFile, int freq) throws IOException {
         List<Double> ecgList = new ArrayList<>();
         List<Double> accX = new ArrayList<>();
         List<Double> accY = new ArrayList<>();
         List<Double> accZ = new ArrayList<>();
-
+        List<Double> accMagnitude = new ArrayList<>();
+        System.out.println("Leyendo CSV "+csvFile.getAbsolutePath());
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             String line;
 
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
+                System.out.println("Linea leida: "+line);
+                String[] parts = line.split(";");
 
-                if (parts.length < 4) continue;
+                if (parts.length > 4) continue;
 
                 ecgList.add(Double.parseDouble(parts[0]));
-                accX.add(Double.parseDouble(parts[1]));
-                accY.add(Double.parseDouble(parts[2]));
-                accZ.add(Double.parseDouble(parts[3]));
+                System.out.println("ecg "+parts[0]);
+                accMagnitude.add(Double.parseDouble(parts[1]));
             }
         }
 
         // Construimos un Signal temporal
         Signal s = new Signal();
         s.setEcg(ecgList.stream().mapToDouble(Double::doubleValue).toArray());
-        //como funciona lo de acc para q con solo un array pueda guardar los 3 ejes?
-       //s.setAcc(accX, accY, accZ);
-        s.setFrequency(1000); // o descubre del CSV o del metadata
-
+        s.setAcc(accMagnitude.stream().mapToDouble(Double::doubleValue).toArray());
+        s.setFrequency(freq);
         return s;
     }
 

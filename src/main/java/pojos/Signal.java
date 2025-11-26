@@ -10,6 +10,8 @@ import java.util.Base64;
 
 public class Signal {
     private int id;
+    private double[]  ecg;
+    private double[] acc;
     private Integer frequency;
     private String timestamp;
     private String comments;
@@ -18,16 +20,6 @@ public class Signal {
     private int reportId;
 
 
-    public Signal(LocalDate date, Integer frequency, String timestamp, String comments, int reportId,File zipFile) {
-        this.id = id;
-        this.frequency = frequency;
-        this.timestamp = timestamp;
-        this.comments = comments;
-        this.reportId = reportId;
-        this.date = date;
-        this.zipFile = zipFile;
-    }
-
     public Signal(int id, LocalDate date, String comments, double samplingRate) {
         this.id = id;
         this.date = date;
@@ -35,6 +27,7 @@ public class Signal {
         this.frequency = (int) samplingRate;
         this.timestamp = "";
         this.reportId = -1;
+
     }
 
     public Signal(int id, LocalDate date, String comments, double samplingRate, File tempZip) {
@@ -77,7 +70,7 @@ public class Signal {
         String comments = meta.get("comments").getAsString();
         double samplingRate = meta.get("sampling_rate").getAsDouble();
         LocalDate date = LocalDate.parse(meta.get("date").getAsString());
-        String base64Zip = json.get("data").getAsString();
+        String base64Zip = json.get("dataBytes").getAsString();
         byte[] zipBytes = Base64.getDecoder().decode(base64Zip);
         File tempZip = File.createTempFile("signal_" + id + "_", ".zip");
         try (FileOutputStream fos = new FileOutputStream(tempZip)) {
@@ -124,18 +117,19 @@ public class Signal {
     }
 
     public double[] getEcg() {
-        return null;
+        return this.ecg;
     }
 
     public double[] getAcc() {
-        return null;
+        return this.acc;
     }
 
     public void setEcg(double[] result) {
-        
+        this.ecg= result;
     }
 
     public void setAcc(double[] acc) {
+        this.acc = acc;
     }
     public File getZipFile() {
         return zipFile;
