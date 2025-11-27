@@ -473,7 +473,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         JsonObject response;
         do {
             response = responseQueue.take();
-        } while (!response.get("type").getAsString().equals("CHANGE_PASSWORD_RESPONSE"));
+        } while (!response.get("type").getAsString().equals("CHANGE_PASSWORD_REQUEST_RESPONSE"));
 
         // Check response
         String status = response.get("status").getAsString();
