@@ -457,6 +457,34 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         }
     }
 
+    public void changePassword(String email, String newPassword) throws IOException, InterruptedException {
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", email);
+        data.put("new_password", newPassword);
+
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "CHANGE_PASSWORD_REQUEST");
+        message.put("data", data);
+
+        String jsonMessage = gson.toJson(message);
+        sendEncrypted(jsonMessage, out, AESkey);
+
+        //Waits for a response of type CHANGE_PASSWORD_RESPONSE
+        JsonObject response;
+        do {
+            response = responseQueue.take();
+        } while (!response.get("type").getAsString().equals("CHANGE_PASSWORD_RESPONSE"));
+
+        // Check response
+        String status = response.get("status").getAsString();
+        if (!status.equals("SUCCESS")) {
+            throw new IOException("Password change failed: "+response.get("message").getAsString());
+        }
+
+        System.out.println("Password successfully changed!");
+
+    }
+
     public void sendEncrypted(String message, PrintWriter out, SecretKey AESkey) {
         try {
             String encryptedJson = AESUtil.encrypt(message, AESkey);

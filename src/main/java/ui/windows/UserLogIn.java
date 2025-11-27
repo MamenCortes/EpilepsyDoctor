@@ -11,6 +11,7 @@ import javax.swing.*;
 import net.miginfocom.swing.MigLayout;
 import network.LogInError;
 import pojos.AppData;
+import pojos.User;
 import ui.components.*;
 
 /**
@@ -223,19 +224,20 @@ public class UserLogIn extends JPanel implements ActionListener{
             public void actionPerformed(ActionEvent e) {
                 String pass1 = password1.getText();
                 String pass2 = password2.getText();
+                String email = emailTxFLogIn.getText();
                 if(pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
                     if(validatePassword(pass2)) {
-                        //TODO: call client to changePasword
-                        /*User u = appMenu.jpaUserMan.getUserByEmail(emailString);
-                        if(!appMenu.jpaUserMan.changePassword(u, pass2)) {
-                            showErrorMessage("Password could't be changed");
+                        try{
+                            appMenu.client.changePassword(email,pass2);
+                            panel.showErrorMessage("Password changed successfully");
+                            dialog.dispose();
+                        }catch (IOException | InterruptedException ex){
+                            ex.printStackTrace();
+                            panel.showErrorMessage("Error changing the password: "+ex.getMessage());
                         }
-                        dialog.dispose();*/
-                        panel.showErrorMessage("Password validated");
                     }else {
                         panel.showErrorMessage("Password must contain 1 number and minimum 8 characters");
                     }
-
                 }else{
                     panel.showErrorMessage("Passwords do not match");
                 }
