@@ -91,15 +91,39 @@ When you are granted access to the Night Guardian platform for the first time, t
 
 * A **corporate email address** (ending in `@nightguardian.com`)
 * A **temporary password**
+* A **single-use token** to activate your account
 
 You cannot create or register your own account.
-Once you log in for the first time using the credentials provided, you will be able to **change your password** to one of your choice (minimum 8 characters and at least one special character). After updating your password, you may continue using the application normally.
+Once you activate your account using the credentials provided, you will be able to **change your password** to one of your choice (minimum 8 characters and at least one special character). After updating your password, you may continue using the application normally.
+
+### First-Time Access & Account Activation
+
+When a doctor accesses the Night Guardian platform for the first time, their account must be activated to ensure secure and authenticated access. Follow the next steps: 
+
+1. **Click “Activate Account”** on the login screen.
+  This opens the activation panel required for first-time setup.
+
+2. **Enter your corporate email, temporary password, and single-use activation token.**
+  These credentials are provided by the hospital IT department and verify your identity.
+  
+  <img src="img/activate-account.png" width="300">
+  
+  3. **Upon successful validation, the system automatically generates your cryptographic keys:**
+
+      * A **private key**, stored safely on your device
+      * A **public key**, sent to the server and saved in the database
+        This establishes an encrypted communication channel unique to your account.
+
+4. **Choose a new password** to replace the temporary one.
+  The system will only accept passwords that meet the security requirements.
+
+5. **Log in normally** with your corporate email and new password and start exploring the App.
 
 
 ### Change password
 To change the password, introduce a valid email and then click **"Forgot you password?"**. Then introduce the new password and click **Save**. 
 
-<img src="img/changePassword.png" width="500">
+<img src="img/changePassword.png" width="300">
 
 ### Login
 Enter:
@@ -180,6 +204,7 @@ Visualizes symptoms reported by the patient on a **monthly calendar**. Features:
 * A **month selector** allows browsing across months
 
 This view helps identify symptom trends.
+
 <img src="img/patient-info-3.png" width="500">
 
 ## 6. Signal Viewer
@@ -223,7 +248,7 @@ If the server disconnects due to network issues, server shutdown or unexpected e
 2. Return to the **Server IP prompt**
 3. Require reconnection before further use
 
-<img src="img/conexion-error.png" width="500">
+<img src="img/conexion-error.png" width="300">
 
 ## 👥 Authors
 
