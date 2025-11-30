@@ -38,7 +38,7 @@ import ui.components.*;
  *
  *  @author MamenCortes
  */
-public class UserLogIn extends JPanel implements ActionListener {
+public class UserLogIn extends JPanel implements ActionListener{
 
     private static final long serialVersionUID = 1L;
     private JPanel panelLogIn;
@@ -140,7 +140,7 @@ public class UserLogIn extends JPanel implements ActionListener {
     public void initLogin() {
 
         panelLogIn.setBackground(Color.white);
-        panelLogIn.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[][]15[]push"));
+        panelLogIn.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[][]15[]push"));
         JLabel label = new JLabel("Log In");
         label.setFont(new Font("sansserif", 1, 30));
         label.setForeground(Application.dark_purple);
@@ -204,6 +204,7 @@ public class UserLogIn extends JPanel implements ActionListener {
             if(canChangePassword()) {
                 showChangePasswordPane(appMenu);
             }
+
         }else if(e.getSource() == activateAccount) {
             showActivateAccountPane(appMenu);
         }
@@ -238,21 +239,112 @@ public class UserLogIn extends JPanel implements ActionListener {
                 String pass1 = password1.getText();
                 String pass2 = password2.getText();
                 String email = emailTxFLogIn.getText();
-                if (pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
-                    if (validatePassword(pass2)) {
-                        try {
-                            appMenu.client.changePassword(email, pass2);
+                if(pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
+                    if(validatePassword(pass2)) {
+                        try{
+                            appMenu.client.changePassword(email,pass2);
                             panel.showErrorMessage("Password changed successfully");
                             dialog.dispose();
-                        } catch (IOException | InterruptedException ex) {
+                        }catch (IOException | InterruptedException ex){
                             ex.printStackTrace();
-                            panel.showErrorMessage("Error changing the password: " + ex.getMessage());
+                            panel.showErrorMessage("Error changing the password: "+ex.getMessage());
                         }
-                    } else {
+                    }else {
                         panel.showErrorMessage("Password must contain 1 number and minimum 8 characters");
                     }
-                } else {
+                }else{
                     panel.showErrorMessage("Passwords do not match");
+                }
+
+            }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    /**
+     * Displays the "Activate Account" dialog, where the user can enter their email,
+     * password and token given by the administrator outside the system.
+     * If the credentials are correct, a keyPair is created, the private key is stored in the computer
+     * in a file, and the public key is sent to the server for storage and safe communication.
+     * Validation is handled inside this method.
+     *
+     * @param parentFrame the application frame to anchor the dialog
+     */
+    private void showActivateAccountPane(JFrame parentFrame) {
+        MyTextField emailTxt = new MyTextField();
+        MyTextField passwordTxt = new MyTextField();
+        MyTextField tokenTxt = new MyTextField();
+        MyButton okButton = new MyButton("OK");
+        MyButton cancelButton = new MyButton("CANCEL");
+
+        final JLabel errorMessageDialog = new JLabel();
+        JPanel panel  = new JPanel();
+        panel.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[]10[]push"));
+        JLabel label = new JLabel("Activate Account");
+        label.setFont(new Font("sansserif", 1, 30));
+        label.setForeground(Application.dark_purple);
+        panel.add(label);
+
+        emailTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/mail.png")));
+        emailTxt.setHint("Enter the email provided...");
+        panel.add(emailTxt, "w 60%");
+
+        passwordTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/pass.png")));
+        passwordTxt.setHint("Enter the password provided...");
+        panel.add(passwordTxt, "w 60%");
+
+        tokenTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/key.png")));
+        tokenTxt.setHint("Enter the token provided...");
+        panel.add(tokenTxt, "w 60%");
+
+        errorMessageDialog.setFont(new Font("sansserif", Font.BOLD, 12));
+        errorMessageDialog.setForeground(Color.red);
+        errorMessageDialog.setText("Error message test");
+        errorMessageDialog.setVisible(false);
+        //panel.add(errorMessageDialog);
+
+        okButton.setBackground(Application.turquoise);
+        okButton.setForeground(new Color(250, 250, 250));
+        cancelButton.setBackground(Application.turquoise);
+        cancelButton.setForeground(new Color(250, 250, 250));
+
+        panel.add(okButton, "split 2, grow, left");
+        panel.add(cancelButton, "grow, right");
+        panel.add(errorMessageDialog,"w 10%" );
+        panel.setBackground(Color.white);
+        panel.setPreferredSize(new Dimension(400, 300));
+
+        JDialog dialog = new JDialog(parentFrame, "Activate Account", true);
+        dialog.getContentPane().add(panel);
+        dialog.getContentPane().setBackground(Color.white);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = emailTxt.getText();
+                String pass = passwordTxt.getText();
+                String token = tokenTxt.getText();
+
+                if(email != null && !email.isBlank() && !pass.isBlank() && !token.isBlank()) {
+                    //TODO: send data to Server to check if token is valid for the user (email,password)
+                    ///TODO: when confirmation received, create private and public keys, send public key to server and if it doesn't throw any errors,
+                    ///then save private key in computer file and return no logIn
+                    errorMessageDialog.setText("Password changed successfully");
+                    errorMessageDialog.setVisible(true);
+                    dialog.dispose();
+                }else{
+                    errorMessageDialog.setText("Complete all fields");
+                    errorMessageDialog.setVisible(true);
                 }
 
             }

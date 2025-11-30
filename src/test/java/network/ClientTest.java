@@ -23,7 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-//TODO: check tests
+//TODO: check tests when Paula finishes encryption
 public class ClientTest {
 
     Client client;
@@ -79,6 +79,7 @@ public class ClientTest {
         assertTrue(ok);
     }
 
+    //TODO
     @Test
     void testLoginSuccess() throws Exception {
 
