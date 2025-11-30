@@ -36,6 +36,11 @@ public class Client {
     private BlockingQueue<JsonObject> responseQueue = new LinkedBlockingQueue<>();
     private KeyPair clientKeyPair;
     private PublicKey serverPublicKey;
+
+    public void setToken(SecretKey token) {
+        this.token = token;
+    }
+
     private SecretKey token;
     private final CountDownLatch tokenReady = new CountDownLatch(1);
 
@@ -216,7 +221,7 @@ public class Client {
         out.println("Hi! I'm a new client!\n");
     }
 
-    public boolean sendActivationRequest (String email, String temporaryPass, String oneTimeToken) throws InterruptedException {
+    public boolean sendActivationRequest (String email, String temporaryPass, String oneTimeToken) throws InterruptedException, KeyErrorException {
         Map<String, Object> data = new HashMap<>();
         data.put("email", email);
         data.put("temp_pass", temporaryPass);
@@ -234,8 +239,17 @@ public class Client {
         JsonObject response;
         do{
             response = responseQueue.take();
-        }while (response.get("type").getAsString().equals("ACTIVATION_RESPONSE"));
+            if(response.get("type").getAsString().equals("ACTIVATION_REQUEST_RESPONSE")){
+                break;
+            }
+        }while (response.get("type").getAsString().equals("ACTIVATION_REQUEST_RESPONSE"));
+
+        System.out.println("Response received: "+response);
         String status = response.get("status").getAsString();
+        if(status.equals("ERROR")){
+            System.out.println("Error: "+response.get("message").getAsString());
+            throw new KeyErrorException(response.get("message").getAsString());
+        }
         return status.equals("SUCCESS");
     }
 
@@ -264,7 +278,7 @@ public class Client {
         System.out.println("Sent Client's Public Key to Server");
     }
 
-    public AppData login(String email, String password) throws IOException, InterruptedException, LogInError {
+    public AppData login(String email, String password) throws IOException, InterruptedException, LogInError, KeyErrorException {
         //String message = "LOGIN;" + email + ";" + password;
         String fileEmail = email.replaceAll("[@.]", "_");
         PrivateKey privateKey = RSAKeyManager.retrievePrivateKey(fileEmail);
