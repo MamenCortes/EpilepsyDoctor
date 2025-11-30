@@ -195,6 +195,7 @@ public class UserLogIn extends JPanel implements ActionListener{
     public void actionPerformed(ActionEvent e) {
 
         if(e.getSource() == applyLogIn) {
+            errorMessage.setVisible(false);
             System.out.println("LogIn");
             if(logIn()) {
                 resetPanel();
@@ -202,11 +203,13 @@ public class UserLogIn extends JPanel implements ActionListener{
             }
 
         }else if(e.getSource() == changePassword) {
+            errorMessage.setVisible(false);
             if(canChangePassword()) {
                 showChangePasswordPane(appMenu);
             }
 
         }else if(e.getSource() == activateAccount) {
+            errorMessage.setVisible(false);
             showActivateAccountPane(appMenu);
         }
     }
@@ -244,10 +247,11 @@ public class UserLogIn extends JPanel implements ActionListener{
                     if(validatePassword(pass2)) {
                         try{
                             appMenu.client.changePassword(email,pass2);
-                            panel.showErrorMessage("Password changed successfully");
+                            JOptionPane.showMessageDialog(parentFrame, "Password changed successfully!");
+                            //panel.showErrorMessage("Password changed successfully");
                             dialog.dispose();
                         }catch (Exception ex){
-                            ex.printStackTrace();
+                            //ex.printStackTrace();
                             panel.showErrorMessage("Error changing the password: "+ex.getMessage());
                         }
                     }else {
