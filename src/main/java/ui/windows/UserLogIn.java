@@ -245,7 +245,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                             appMenu.client.changePassword(email,pass2);
                             panel.showErrorMessage("Password changed successfully");
                             dialog.dispose();
-                        }catch (IOException | InterruptedException ex){
+                        }catch (Exception ex){
                             ex.printStackTrace();
                             panel.showErrorMessage("Error changing the password: "+ex.getMessage());
                         }

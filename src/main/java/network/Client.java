@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
@@ -124,6 +125,31 @@ public class Client {
                                 }
                                 break;
                             }
+                            case "ENCRYPTED_RESPONSE":{
+                                String encrypted = request.get("message").getAsString();
+                                String signatureBase64 = request.get("signature").getAsString();
+                                //Decrypt with clients private key
+                                String json = RSAUtil.decrypt(encrypted, clientKeyPair.getPrivate());
+                                //Verify signature with server public key
+                                Signature sig = Signature.getInstance("SHA256withRSA");
+                                sig.initVerify(serverPublicKey);
+                                sig.update(json.getBytes());
+
+                                if (!sig.verify(Base64.getDecoder().decode(signatureBase64))) {
+                                    System.err.println("Signature verification failed");
+                                    break;
+                                }
+
+                                JsonObject decrypted = gson.fromJson(json, JsonObject.class);
+
+                                String innerType = decrypted.get("type").getAsString();
+
+                                if (innerType.equals("CHANGE_PASSWORD_REQUEST_RESPONSE")) {
+                                    responseQueue.put(decrypted);
+                                }
+
+                                break;
+                            }
                         }
                     }
 
@@ -230,13 +256,39 @@ public class Client {
         out.flush();
 
         System.out.println("📤 ACTIVATION_REQUEST sent to server: " + request);
+        boolean activationSuccess = false;
+        while(true) {
+            JsonObject response = responseQueue.take();
+            String type = response.get("type").getAsString();
 
-        JsonObject response;
-        do{
-            response = responseQueue.take();
-        }while (response.get("type").getAsString().equals("ACTIVATION_RESPONSE"));
-        String status = response.get("status").getAsString();
-        return status.equals("SUCCESS");
+            switch(type){
+                case "SERVER_PUBLIC_KEY": {
+                    try {
+                        String serverPublicKeyEncoded = response.get("data").getAsString();
+                        byte[] keyBytes = Base64.getDecoder().decode(serverPublicKeyEncoded);
+                        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                        this.serverPublicKey = keyFactory.generatePublic(keySpec);
+                        System.out.println("Server Public Key stored successfully: " +
+                                Base64.getEncoder().encodeToString(this.serverPublicKey.getEncoded()));
+                    } catch (Exception e) {
+                        System.out.println("Failed to process SERVER_PUBLIC_KEY: " + e.getMessage());
+                        stopClient(true);
+                        return false;
+                    }
+                    break;
+                }
+
+                case "ACTIVATION_REQUEST_RESPONSE": {
+                    String status = response.get("status").getAsString();
+                    activationSuccess = status.equals("SUCCESS");
+                    return activationSuccess;
+                }
+                default:
+                    System.out.println("Unhandled response type: "+type);
+                    break;
+            }
+        }
     }
 
     public void sendTokenRequest(String email){
@@ -532,7 +584,7 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         }
     }
 
-    public void changePassword(String email, String newPassword) throws IOException, InterruptedException {
+    public void changePassword(String email, String newPassword) throws Exception {
         Map<String, Object> data = new HashMap<>();
         data.put("email", email);
         data.put("new_password", newPassword);
@@ -542,7 +594,27 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         message.put("data", data);
 
         String jsonMessage = gson.toJson(message);
-        sendEncrypted(jsonMessage, out, token);
+
+        String fileEmail = email.replaceAll("[@.]", "_");
+        PrivateKey privateKey =RSAKeyManager.retrievePrivateKey(fileEmail);
+        PublicKey publicKey = RSAKeyManager.retrievePublicKey(fileEmail);
+        this.clientKeyPair = new KeyPair(publicKey,privateKey);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+        signature.update(jsonMessage.getBytes(StandardCharsets.UTF_8));
+        byte[] signatureBytes = signature.sign();
+        String signatureBase64 = Base64.getEncoder().encodeToString(signatureBytes);
+
+        String encryptedMessage = RSAUtil.encrypt(jsonMessage, serverPublicKey);
+        JsonObject wrapper = new JsonObject();
+        wrapper.addProperty("type", "ENCRYPTED_MESSAGE");
+        wrapper.addProperty("message", encryptedMessage);
+        wrapper.addProperty("signature", signatureBase64);
+        wrapper.addProperty("clientEmail", email);
+
+        out.println(gson.toJson(wrapper));
+        out.flush();
+        //sendEncrypted(jsonMessage, out, token);
 
         //Waits for a response of type CHANGE_PASSWORD_RESPONSE
         JsonObject response;
@@ -559,7 +631,6 @@ public List<Signal> getAllSignalsFromPatient (int patient_id) throws IOException
         System.out.println("Password successfully changed!");
 
     }
-
     public void sendEncrypted(String message, PrintWriter out, SecretKey AESkey) {
         try {
             String encryptedJson = AESUtil.encrypt(message, AESkey);
