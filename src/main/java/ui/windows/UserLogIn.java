@@ -4,10 +4,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.security.KeyPair;
 import java.util.Objects;
 
 import javax.swing.*;
 
+import encryption.RSAKeyManager;
+import encryption.RSAUtil;
 import net.miginfocom.swing.MigLayout;
 import network.LogInError;
 import pojos.AppData;
@@ -35,7 +38,7 @@ import ui.components.*;
  *
  *  @author MamenCortes
  */
-public class UserLogIn extends JPanel implements ActionListener{
+public class UserLogIn extends JPanel implements ActionListener {
 
     private static final long serialVersionUID = 1L;
     private JPanel panelLogIn;
@@ -48,6 +51,7 @@ public class UserLogIn extends JPanel implements ActionListener{
     private MyTextField passwordTxFLogIn;
     private JPanel coverPanel;
     private JLabel errorMessage;
+    private MyButton activateAccount;
 
     /**
      * Creates the login panel, sets the main layout, initializes all required UI
@@ -80,6 +84,8 @@ public class UserLogIn extends JPanel implements ActionListener{
         applyLogIn.addActionListener(this);
         changePassword = new MyButton();
         changePassword.addActionListener(this);
+        activateAccount = new MyButton();
+        activateAccount.addActionListener(this);
 
         emailTxF = new MyTextField();
         emailTxF.addActionListener(this);
@@ -153,6 +159,12 @@ public class UserLogIn extends JPanel implements ActionListener{
         changePassword.setCursor(new Cursor(Cursor.HAND_CURSOR));
         panelLogIn.add(changePassword);
 
+        activateAccount.setText("Activate Account");
+        activateAccount.setFont(new Font("sansserif", 1, 12));
+        activateAccount.setContentAreaFilled(false);
+        activateAccount.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panelLogIn.add(activateAccount, "w 70%");
+
         errorMessage = new JLabel();
         errorMessage.setFont(new Font("sansserif", Font.BOLD, 12));
         errorMessage.setForeground(Color.red);
@@ -192,7 +204,8 @@ public class UserLogIn extends JPanel implements ActionListener{
             if(canChangePassword()) {
                 showChangePasswordPane(appMenu);
             }
-
+        }else if(e.getSource() == activateAccount) {
+            showActivateAccountPane(appMenu);
         }
     }
 
@@ -225,20 +238,20 @@ public class UserLogIn extends JPanel implements ActionListener{
                 String pass1 = password1.getText();
                 String pass2 = password2.getText();
                 String email = emailTxFLogIn.getText();
-                if(pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
-                    if(validatePassword(pass2)) {
-                        try{
-                            appMenu.client.changePassword(email,pass2);
+                if (pass1 != null && pass1.equals(pass2) && !pass1.isBlank()) {
+                    if (validatePassword(pass2)) {
+                        try {
+                            appMenu.client.changePassword(email, pass2);
                             panel.showErrorMessage("Password changed successfully");
                             dialog.dispose();
-                        }catch (IOException | InterruptedException ex){
+                        } catch (IOException | InterruptedException ex) {
                             ex.printStackTrace();
-                            panel.showErrorMessage("Error changing the password: "+ex.getMessage());
+                            panel.showErrorMessage("Error changing the password: " + ex.getMessage());
                         }
-                    }else {
+                    } else {
                         panel.showErrorMessage("Password must contain 1 number and minimum 8 characters");
                     }
-                }else{
+                } else {
                     panel.showErrorMessage("Passwords do not match");
                 }
 
@@ -269,17 +282,17 @@ public class UserLogIn extends JPanel implements ActionListener{
     private Boolean logIn() {
         String email = emailTxFLogIn.getText();
         String password = passwordTxFLogIn.getText();
-        System.out.println("email: " + email+" password: "+password);
-        if(!email.isBlank() && !password.isBlank()) {
+        System.out.println("email: " + email + " password: " + password);
+        if (!email.isBlank() && !password.isBlank()) {
 
             try {
                 AppData appdata = appMenu.client.login(email, password);
                 System.out.println(appdata);
-                if(appdata.getDoctor() != null && appdata.getUser() != null) {
+                if (appdata.getDoctor() != null && appdata.getUser() != null) {
                     appMenu.doctor = appdata.getDoctor();
                     appMenu.user = appdata.getUser();
                     return true;
-                }else{
+                } else {
                     showErrorMessage("Error retrieving Patient and User data");
                     return false;
                 }
@@ -287,7 +300,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                 showErrorMessage(e.getMessage());
                 return false;
             }
-        }else {
+        } else {
             showErrorMessage("Complete all fields");
             return false;
         }
@@ -304,16 +317,16 @@ public class UserLogIn extends JPanel implements ActionListener{
      */
     public Boolean canChangePassword() {
         String email = emailTxFLogIn.getText();
-        if(email != null && !email.isBlank()){
+        if (email != null && !email.isBlank()) {
             //TODO: send request to server
             Boolean isUser = true; //appMenu.jpaUserMan.isUser(email);
-            if(isUser) {
+            if (isUser) {
                 return true;
-            }else {
+            } else {
                 showErrorMessage("Invalid user or password");
                 return false;
             }
-        }else {
+        } else {
             showErrorMessage("Write the email first");
             return false;
         }
@@ -328,22 +341,22 @@ public class UserLogIn extends JPanel implements ActionListener{
      */
     private Boolean validatePassword(String password) {
         boolean passwordVacia = (Objects.isNull(password)) || password.isEmpty();
-        boolean goodPassword=false;
-        System.out.println("password vacía "+passwordVacia);
-        if(!passwordVacia && password.length() >= 8) {
-            for(int i=0; i<password.length(); i++) {
+        boolean goodPassword = false;
+        System.out.println("password empty " + passwordVacia);
+        if (!passwordVacia && password.length() >= 8) {
+            for (int i = 0; i < password.length(); i++) {
 
                 //The password must contain at least one number
-                if(Character.isDigit(password.charAt(i))) {
+                if (Character.isDigit(password.charAt(i))) {
                     goodPassword = true;
                 }
             }
-            if(!goodPassword) {
+            if (!goodPassword) {
                 showErrorMessage("The password must contain at least one number.");
                 return false;
             }
-        }else {
-            showErrorMessage("Password's minimum lenght is of 8 characters");
+        } else {
+            showErrorMessage("Password's minimum length is of 8 characters");
             return false;
         }
         return true;
@@ -369,7 +382,7 @@ public class UserLogIn extends JPanel implements ActionListener{
      *
      * @param text the message to show
      */
-    public void showErrorMessage(String text){
+    public void showErrorMessage(String text) {
         errorMessage.setVisible(true);
         errorMessage.setText(text);
     }
@@ -379,6 +392,124 @@ public class UserLogIn extends JPanel implements ActionListener{
      */
     public void hideErrorMessage() {
         errorMessage.setVisible(false);
+    }
+
+
+    /**
+     * Displays the "Activate Account" dialog, where the user can enter their email,
+     * password and token given by the administrator outside the system.
+     * If the credentials are correct, a keyPair is created, the private key is stored in the computer
+     * in a file, and the public key is sent to the server for storage and safe communication.
+     * Validation is handled inside this method.
+     *
+     * @param parentFrame the application frame to anchor the dialog
+     */
+    public void showActivateAccountPane(JFrame parentFrame) {
+        MyTextField emailTxt = new MyTextField();
+        MyTextField passwordTxt = new MyTextField();
+        MyTextField tokenTxt = new MyTextField();
+        MyButton okButton = new MyButton("OK");
+        MyButton cancelButton = new MyButton("CANCEL");
+
+        final JLabel errorMessageDialog = new JLabel();
+        JPanel panel  = new JPanel();
+        panel.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[]10[]push"));
+        JLabel label = new JLabel("Activate Account");
+        label.setFont(new Font("sansserif", 1, 30));
+        label.setForeground(Application.dark_purple);
+        panel.add(label);
+
+        emailTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/mail.png")));
+        emailTxt.setHint("Enter the email provided...");
+        panel.add(emailTxt, "w 60%");
+
+        passwordTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/pass.png")));
+        passwordTxt.setHint("Enter the password provided...");
+        panel.add(passwordTxt, "w 60%");
+
+        tokenTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/key.png")));
+        tokenTxt.setHint("Enter the token provided...");
+        panel.add(tokenTxt, "w 60%");
+
+        errorMessageDialog.setFont(new Font("sansserif", Font.BOLD, 12));
+        errorMessageDialog.setForeground(Color.red);
+        errorMessageDialog.setText("Error message test");
+        errorMessageDialog.setVisible(false);
+        //panel.add(errorMessageDialog);
+
+        okButton.setBackground(Application.turquoise);
+        okButton.setForeground(new Color(250, 250, 250));
+        cancelButton.setBackground(Application.turquoise);
+        cancelButton.setForeground(new Color(250, 250, 250));
+
+        panel.add(okButton, "split 2, grow, left");
+        panel.add(cancelButton, "grow, right");
+        panel.add(errorMessageDialog,"w 10%" );
+        panel.setBackground(Color.white);
+        panel.setPreferredSize(new Dimension(400, 300));
+
+        JDialog dialog = new JDialog(parentFrame, "Activate Account", true);
+        dialog.getContentPane().add(panel);
+        dialog.getContentPane().setBackground(Color.white);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = emailTxt.getText();
+                String pass = passwordTxt.getText();
+                String token = tokenTxt.getText();
+
+                if (email != null && !email.isBlank() && !pass.isBlank() && !token.isBlank()) {
+                    ///then save private key in computer file and return no logIn
+                    try {
+                        boolean activated = appMenu.client.sendActivationRequest(email, pass, token);
+
+                        if (activated) {
+                            KeyPair keyPair = RSAKeyManager.generateKeyPair();
+                            appMenu.client.setClientKeyPair(keyPair);
+                            appMenu.client.sendPublicKey(keyPair.getPublic(), email);
+
+                            String fileEmail = email.replaceAll("[@.]", "_");
+                            if (!RSAUtil.keysExist(fileEmail)) {
+                                RSAKeyManager.saveKey(keyPair, fileEmail);
+                            } else {
+                                System.out.println("Key files already exist. Skipping save.");
+                                activated = false;
+                            }
+
+                            JOptionPane.showMessageDialog(parentFrame, "Account activated successfully!");
+                        } else {
+                            errorMessageDialog.setText("Activation failed. Check your token and password provided");
+                            errorMessageDialog.setVisible(true);
+                            activated = false;
+                        }
+                    } catch (Exception ex) {
+                        errorMessageDialog.setText("Error during activation: " + ex.getMessage());
+                        errorMessageDialog.setVisible(true);
+                    }
+                    dialog.dispose();
+                } else {
+                    errorMessageDialog.setText("Complete all fields");
+                    errorMessageDialog.setVisible(true);
+                }
+            }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    public static void main(String args[]){
+        UserLogIn userLogIn = new UserLogIn(null);
+        SwingUtilities.invokeLater(() -> userLogIn.showActivateAccountPane(new JFrame()));
     }
 
 }

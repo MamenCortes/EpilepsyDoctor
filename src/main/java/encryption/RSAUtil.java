@@ -2,6 +2,7 @@ package encryption;
 
 
 import javax.crypto.Cipher;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -42,5 +43,10 @@ public class RSAUtil {
         byte[] passwordBytes = decryptCipher.doFinal(encodedPassword);
         String decryptedPassword = new String(passwordBytes,StandardCharsets.UTF_8);
         return decryptedPassword;
+    }
+
+    public static boolean keysExist (String filename){
+        File privateFile = new File(filename + "_private_key");
+        return privateFile.exists();
     }
 }

@@ -15,6 +15,12 @@ public class AESUtil {
     private static final int tag_length_bits = 128;
     private static final int iv_length_bytes = 12;
 
+    /**
+     *
+     *
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
     public static SecretKey generateAESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
         keyGenerator.init(128, SecureRandom.getInstanceStrong());
