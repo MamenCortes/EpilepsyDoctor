@@ -335,18 +335,39 @@ public class UserLogIn extends JPanel implements ActionListener{
                 String pass = passwordTxt.getText();
                 String token = tokenTxt.getText();
 
-                if(email != null && !email.isBlank() && !pass.isBlank() && !token.isBlank()) {
-                    //TODO: send data to Server to check if token is valid for the user (email,password)
-                    ///TODO: when confirmation received, create private and public keys, send public key to server and if it doesn't throw any errors,
+                if (email != null && !email.isBlank() && !pass.isBlank() && !token.isBlank()) {
                     ///then save private key in computer file and return no logIn
-                    errorMessageDialog.setText("Password changed successfully");
-                    errorMessageDialog.setVisible(true);
+                    try {
+                        boolean activated = appMenu.client.sendActivationRequest(email, pass, token);
+
+                        if (activated) {
+                            KeyPair keyPair = RSAKeyManager.generateKeyPair();
+                            appMenu.client.setClientKeyPair(keyPair);
+                            appMenu.client.sendPublicKey(keyPair.getPublic(), email);
+
+                            String fileEmail = email.replaceAll("[@.]", "_");
+                            if (!RSAUtil.keysExist(fileEmail)) {
+                                RSAKeyManager.saveKey(keyPair, fileEmail);
+                            } else {
+                                System.out.println("Key files already exist. Skipping save.");
+                                activated = false;
+                            }
+
+                            JOptionPane.showMessageDialog(parentFrame, "Account activated successfully!");
+                        } else {
+                            errorMessageDialog.setText("Activation failed. Check your token and password provided");
+                            errorMessageDialog.setVisible(true);
+                            activated = false;
+                        }
+                    } catch (Exception ex) {
+                        errorMessageDialog.setText("Error during activation: " + ex.getMessage());
+                        errorMessageDialog.setVisible(true);
+                    }
                     dialog.dispose();
-                }else{
+                } else {
                     errorMessageDialog.setText("Complete all fields");
                     errorMessageDialog.setVisible(true);
                 }
-
             }
         });
 
@@ -484,119 +505,6 @@ public class UserLogIn extends JPanel implements ActionListener{
      */
     public void hideErrorMessage() {
         errorMessage.setVisible(false);
-    }
-
-
-    /**
-     * Displays the "Activate Account" dialog, where the user can enter their email,
-     * password and token given by the administrator outside the system.
-     * If the credentials are correct, a keyPair is created, the private key is stored in the computer
-     * in a file, and the public key is sent to the server for storage and safe communication.
-     * Validation is handled inside this method.
-     *
-     * @param parentFrame the application frame to anchor the dialog
-     */
-    public void showActivateAccountPane(JFrame parentFrame) {
-        MyTextField emailTxt = new MyTextField();
-        MyTextField passwordTxt = new MyTextField();
-        MyTextField tokenTxt = new MyTextField();
-        MyButton okButton = new MyButton("OK");
-        MyButton cancelButton = new MyButton("CANCEL");
-
-        final JLabel errorMessageDialog = new JLabel();
-        JPanel panel  = new JPanel();
-        panel.setLayout(new MigLayout("wrap", "push[center]push", "push[]25[]10[]10[]10[]10[]push"));
-        JLabel label = new JLabel("Activate Account");
-        label.setFont(new Font("sansserif", 1, 30));
-        label.setForeground(Application.dark_purple);
-        panel.add(label);
-
-        emailTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/mail.png")));
-        emailTxt.setHint("Enter the email provided...");
-        panel.add(emailTxt, "w 60%");
-
-        passwordTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/pass.png")));
-        passwordTxt.setHint("Enter the password provided...");
-        panel.add(passwordTxt, "w 60%");
-
-        tokenTxt.setPrefixIcon(new ImageIcon(getClass().getResource("/icons/key.png")));
-        tokenTxt.setHint("Enter the token provided...");
-        panel.add(tokenTxt, "w 60%");
-
-        errorMessageDialog.setFont(new Font("sansserif", Font.BOLD, 12));
-        errorMessageDialog.setForeground(Color.red);
-        errorMessageDialog.setText("Error message test");
-        errorMessageDialog.setVisible(false);
-        //panel.add(errorMessageDialog);
-
-        okButton.setBackground(Application.turquoise);
-        okButton.setForeground(new Color(250, 250, 250));
-        cancelButton.setBackground(Application.turquoise);
-        cancelButton.setForeground(new Color(250, 250, 250));
-
-        panel.add(okButton, "split 2, grow, left");
-        panel.add(cancelButton, "grow, right");
-        panel.add(errorMessageDialog,"w 10%" );
-        panel.setBackground(Color.white);
-        panel.setPreferredSize(new Dimension(400, 300));
-
-        JDialog dialog = new JDialog(parentFrame, "Activate Account", true);
-        dialog.getContentPane().add(panel);
-        dialog.getContentPane().setBackground(Color.white);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentFrame);
-
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String email = emailTxt.getText();
-                String pass = passwordTxt.getText();
-                String token = tokenTxt.getText();
-
-                if (email != null && !email.isBlank() && !pass.isBlank() && !token.isBlank()) {
-                    ///then save private key in computer file and return no logIn
-                    try {
-                        boolean activated = appMenu.client.sendActivationRequest(email, pass, token);
-
-                        if (activated) {
-                            KeyPair keyPair = RSAKeyManager.generateKeyPair();
-                            appMenu.client.setClientKeyPair(keyPair);
-                            appMenu.client.sendPublicKey(keyPair.getPublic(), email);
-
-                            String fileEmail = email.replaceAll("[@.]", "_");
-                            if (!RSAUtil.keysExist(fileEmail)) {
-                                RSAKeyManager.saveKey(keyPair, fileEmail);
-                            } else {
-                                System.out.println("Key files already exist. Skipping save.");
-                                activated = false;
-                            }
-
-                            JOptionPane.showMessageDialog(parentFrame, "Account activated successfully!");
-                        } else {
-                            errorMessageDialog.setText("Activation failed. Check your token and password provided");
-                            errorMessageDialog.setVisible(true);
-                            activated = false;
-                        }
-                    } catch (Exception ex) {
-                        errorMessageDialog.setText("Error during activation: " + ex.getMessage());
-                        errorMessageDialog.setVisible(true);
-                    }
-                    dialog.dispose();
-                } else {
-                    errorMessageDialog.setText("Complete all fields");
-                    errorMessageDialog.setVisible(true);
-                }
-            }
-        });
-
-        cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
-            }
-        });
-
-        dialog.setVisible(true);
     }
 
     public static void main(String args[]){
