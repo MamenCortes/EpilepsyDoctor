@@ -51,7 +51,7 @@ public class RSAKeyManager {
      * @param pair
      * @param filename
      */
-    public static void saveKey (KeyPair pair, String filename){
+    public static void saveKey (KeyPair pair, String filename) throws KeyErrorException {
         //Create a file object with reference to a file path
         File publicFile = new File(filename + "_public_key");
         File privateFile = new File (filename + "_private_key");
@@ -68,17 +68,19 @@ public class RSAKeyManager {
 
             System.out.println("Public and private keys saved successfully.");
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error saving keys: "+e.getMessage(),e);
+        } catch (Exception e) {
+            //throw new RuntimeException("Error saving keys: "+e.getMessage(),e);
+            throw new KeyErrorException("Error saving keys");
         }
 
     }
 
-    public static PublicKey retrievePublicKey (String filename){
+    public static PublicKey retrievePublicKey (String filename) throws KeyErrorException {
         // Controls file verification
         File publicKeyFile = new File(filename + "_public_key");
         if (!publicKeyFile.exists()){
-            throw new RuntimeException("Public key file not found: "+publicKeyFile.getAbsolutePath());
+            //throw new RuntimeException("Public key file not found: "+publicKeyFile.getAbsolutePath());
+            throw new KeyErrorException("Public key file not found");
         }
 
         try(FileInputStream publicIn = new FileInputStream(publicKeyFile)){
@@ -88,14 +90,16 @@ public class RSAKeyManager {
             return keyFactory.generatePublic(publicKeySpec);
 
         }catch(IOException | NoSuchAlgorithmException | InvalidKeySpecException e){ //TODO: crear una excepción que encapsule todo
-            throw new RuntimeException("Error retrieving public key: "+ e.getMessage(), e);
+            //throw new RuntimeException("Error retrieving public key: "+ e.getMessage(), e);
+            throw new KeyErrorException("Error retrieving public key");
         }
     }
 
-    public static PrivateKey retrievePrivateKey (String filename){
+    public static PrivateKey retrievePrivateKey (String filename) throws KeyErrorException {
         File privateKeyFile = new File(filename + "_private_key");
         if (!privateKeyFile.exists()){
-            throw new RuntimeException("Private key file not found: " +privateKeyFile.getAbsolutePath());
+            //throw new RuntimeException("Private key file not found: " +privateKeyFile.getAbsolutePath());
+            throw new KeyErrorException("Private key file not found");
         }
 
         try(FileInputStream privateIn = new FileInputStream(privateKeyFile)){
@@ -105,7 +109,8 @@ public class RSAKeyManager {
             return keyFactory.generatePrivate(privateKeySpec);
 
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new RuntimeException("Error retrieving private key: "+e.getMessage(), e);
+            //throw new RuntimeException("Error retrieving private key: "+e.getMessage(), e);
+            throw new KeyErrorException("Error retrieving private key");
         }
     }
 }

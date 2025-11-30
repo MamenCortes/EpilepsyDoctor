@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import javax.swing.*;
 
+import encryption.KeyErrorException;
 import encryption.RSAKeyManager;
 import encryption.RSAUtil;
 import net.miginfocom.swing.MigLayout;
@@ -354,16 +355,17 @@ public class UserLogIn extends JPanel implements ActionListener{
                             }
 
                             JOptionPane.showMessageDialog(parentFrame, "Account activated successfully!");
+                            dialog.dispose();
                         } else {
                             errorMessageDialog.setText("Activation failed. Check your token and password provided");
                             errorMessageDialog.setVisible(true);
                             activated = false;
+
                         }
                     } catch (Exception ex) {
                         errorMessageDialog.setText("Error during activation: " + ex.getMessage());
                         errorMessageDialog.setVisible(true);
                     }
-                    dialog.dispose();
                 } else {
                     errorMessageDialog.setText("Complete all fields");
                     errorMessageDialog.setVisible(true);
@@ -409,7 +411,7 @@ public class UserLogIn extends JPanel implements ActionListener{
                     showErrorMessage("Error retrieving Patient and User data");
                     return false;
                 }
-            } catch (IOException | InterruptedException | LogInError e) {
+            } catch (IOException | InterruptedException | LogInError | KeyErrorException e) {
                 showErrorMessage(e.getMessage());
                 return false;
             }
