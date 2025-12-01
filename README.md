@@ -53,6 +53,7 @@ With the Doctor Application, you can:
 * Access your own information
 
 # User Interface Guide
+> See [the app mock up](Doctor_mockup.pdf) for a complete view of the interface. 
 ## 1. Connecting to the Server
 
 When launching the Doctor Application, a dialog box appears requesting the **Server IP address**.
