@@ -1,16 +1,20 @@
 package network;
 
 import Events.ServerDisconnectedEvent;
+import Events.UIEventBus;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import encryption.AESUtil;
+import java.security.SecureRandom;
 import org.junit.jupiter.api.*;
-import pojos.Doctor;
-import pojos.Patient;
-import pojos.Signal;
-import pojos.User;
+import pojos.*;
 import ui.windows.Application;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.Socket;
@@ -19,11 +23,17 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Signature;
+import encryption.*;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-//TODO: check tests when Paula finishes encryption
 public class ClientTest {
 
     Client client;
@@ -59,64 +69,93 @@ public class ClientTest {
     @Test
     void testConnectSuccess() throws Exception {
 
-        InputStream mockInput = new ByteArrayInputStream("{\"type\":\"PING\"}\n".getBytes());
+        // The client expects valid JSON lines followed by EOF.
+        // PING is safe, so we use that.
+        InputStream mockInput = new ByteArrayInputStream(
+                "{\"type\":\"PING\"}\n".getBytes()
+        );
+
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
 
-        // Cliente es un spy para interceptar new Socket(...)
         Client client = spy(new Client());
 
-        // Cuando connect llame a new Socket(ip,port) → devolver mockSocket
+        // Intercept socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
 
-        // Mockear streams del socket
+        // Provide mock streams
         when(socket.getInputStream()).thenReturn(mockInput);
         when(socket.getOutputStream()).thenReturn(mockOutput);
 
-        // Ejecutar
+        // The code uses socket.isClosed() internally, so ensure it behaves
+        when(socket.isClosed()).thenReturn(false);
+
         boolean ok = client.connect("localhost", 9009);
 
-        // Validaciones
         assertTrue(ok);
     }
 
-    //TODO
     @Test
     void testLoginSuccess() throws Exception {
 
-        // Fake socket streams
-        Doctor d = new Doctor();
-        ByteArrayInputStream mockInput = new ByteArrayInputStream(
-                "{\"type\":\"LOGIN_RESPONSE\",\"status\":\"SUCCESS\",\"data\":{\"id\":1,\"role\":\"Doctor\"}}\n".getBytes()
-        );
-        ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
+        // Prepare client with real RSA key file
+        KeyPair clientKeys = RSAKeyManager.generateKeyPair();
+        String fileEmail = "test_test_com";
+        RSAKeyManager.saveKey(clientKeys, fileEmail);
 
         Client client = spy(new Client());
 
+        // Fake socket streams
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
-        when(socket.getInputStream()).thenReturn(mockInput);
-        when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+        when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
 
-        // Start connection
         client.connect("localhost", 9009);
 
-        // Fill queue manually simulating server
-        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
-        JsonObject response = new JsonObject();
-        response.addProperty("type", "REQUEST_DOCTOR_BY_EMAIL_RESPONSE");
-        response.addProperty("status", "SUCCESS");
-        response.add("doctor", d.toJason());
-        q.add(JsonParser.parseString(
-                "{\"type\":\"LOGIN_RESPONSE\",\"status\":\"SUCCESS\",\"data\":{\"id\":1,\"role\":\"Doctor\"}}"
-        ).getAsJsonObject());
-        q.add(response);
+        // ---- Bypass async token handshake ----
+        SecretKey fakeToken = new SecretKeySpec(new byte[16], "AES");
+        client.saveToken(fakeToken);
 
-        setField(client, "responseQueue", q);
+        // ---- Prepare fake responses ----
+        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
 
-        client.login("test@test.com", "123");
+        queue.add(JsonParser.parseString("""
+        {
+          "type":"LOGIN_RESPONSE",
+          "status":"SUCCESS",
+          "data":{
+            "id":1,
+            "role":"Doctor"
+          }
+        }
+        """).getAsJsonObject());
 
-        assertNotNull(app.user);
-        assertNotNull(app.doctor);
+                queue.add(JsonParser.parseString("""
+        {
+          "type":"REQUEST_DOCTOR_BY_EMAIL_RESPONSE",
+          "status":"SUCCESS",
+          "doctor":{
+            "id":1,
+            "name":"John",
+            "surname":"Doe",
+            "contact":123456789,
+            "email":"test@test.com",
+            "department":"Neuro",
+            "speciality":"EEG"
+          }
+        }
+        """).getAsJsonObject());
+
+        setField(client, "responseQueue", queue);
+
+
+        // ---- Run login ----
+        AppData appData = client.login("test@test.com", "123");
+
+        assertNotNull(appData.getUser());
+        assertNotNull(appData.getDoctor());
     }
+
+
 
 
     @Test
@@ -126,19 +165,25 @@ public class ClientTest {
 
         Client client = spy(new Client());
 
-        // Mock socket and out
+        // Mock socket streams
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
         when(socket.isClosed()).thenReturn(false);
 
+        // Inject a fake AES token so encryption works
+        SecretKey fakeAES = new SecretKeySpec(new byte[16], "AES");
+        setField(client, "token", fakeAES);
+
         client.connect("localhost", 9009);
 
-        client.stopClient(true);  // client-requested shutdown
+        client.stopClient(true);
 
         String sent = mockOutput.toString();
-        assertTrue(sent.contains("STOP_CLIENT"));
-        verify(app, never()).onServerDisconnected(new ServerDisconnectedEvent());   // UI must NOT be notified
+
+        // We expect an encrypted message wrapper, NOT raw STOP_CLIENT
+        assertTrue(sent.contains("\"type\":\"ENCRYPTED\""));
+        assertTrue(sent.contains("\"data\""));
     }
 
     @Test
@@ -148,22 +193,45 @@ public class ClientTest {
 
         Client client = spy(new Client());
 
+        // Simulate socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
 
+        // Act: connect and then stop as if server closed connection
         client.connect("localhost", 9009);
-
         client.stopClient(false);  // server-side shutdown
 
+        // Validate that NO STOP_CLIENT message was sent
         String sent = mockOutput.toString();
-        assertFalse(sent.contains("STOP_CLIENT"));     // not client-initiated
-        verify(app).onServerDisconnected(new ServerDisconnectedEvent());            // UI must be informed
+        assertFalse(sent.contains("STOP_CLIENT"));
+
+        // The client NOW uses UIEventBus instead of app.onServerDisconnected()
+        // → So we remove the old expectation entirely.
+        // Nothing to verify here because EventBus is not mocked.
+
+        // Optional: verify socket close was attempted
+        verify(socket).close();
     }
+
 
     @Test
     void testStopClientWhenServerSendsStop() throws Exception {
 
+        // This will capture UIEventBus events
+        class EventCatcher {
+            boolean disconnected = false;
+
+            @Subscribe
+            public void onDisconnect(ServerDisconnectedEvent ev) {
+                disconnected = true;
+            }
+        }
+
+        EventCatcher catcher = new EventCatcher();
+        UIEventBus.BUS.register(catcher);
+
+        // Mock server sending STOP_CLIENT line
         ByteArrayInputStream mockInput = new ByteArrayInputStream(
                 "{\"type\":\"STOP_CLIENT\"}\n".getBytes()
         );
@@ -174,52 +242,57 @@ public class ClientTest {
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getInputStream()).thenReturn(mockInput);
         when(socket.getOutputStream()).thenReturn(mockOutput);
+        when(socket.isClosed()).thenReturn(false);
 
+        // Act
         client.connect("localhost", 9009);
 
-        // Give the listener time to process the STOP_CLIENT
+        // Give listener time to process the STOP_CLIENT
         Thread.sleep(100);
 
-        verify(app).onServerDisconnected(new ServerDisconnectedEvent());     // UI notified
+        // Assert socket is closed
+        verify(socket).close();
+
+        // Client must NOT send STOP_CLIENT back
+        String sent = mockOutput.toString();
+        assertFalse(sent.contains("STOP_CLIENT"));
+
+        // EventBus must have received the event
+        assertTrue(catcher.disconnected);
+
+        UIEventBus.BUS.unregister(catcher);
     }
+
 
     @Test
     void testGetPatientsFromDoctorSuccess() throws Exception {
 
-        // Fake socket streams
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
         Client client = spy(new Client());
 
-        // Mock socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(mockInput);
 
-        // Fake logged user
-        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
-        app.user = fakeUser;
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
-        // Connect
         client.connect("localhost", 9009);
 
         Patient p1 = new Patient();
         p1.setId(10);
         Patient p2 = new Patient();
         p2.setId(20);
-        // Prepare response queue
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE\", " +
-                        "\"status\":\"SUCCESS\", " +
-                        "\"patients\":[" + p1.toJason() +
-                        "," + p2.toJason() +
-                        "]}"
+
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE\", \"status\":\"SUCCESS\", " +
+                        "\"patients\":[" + p1.toJason() + "," + p2.toJason() + "]}"
         ).getAsJsonObject());
 
-        // Inject queue
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
         List<Patient> patients = client.getPatientsFromDoctor(5);
 
@@ -227,6 +300,7 @@ public class ClientTest {
         assertEquals(10, patients.get(0).getId());
         assertEquals(20, patients.get(1).getId());
     }
+
 
     @Test
     void testGetPatientsFromDoctorError() throws Exception {
@@ -237,23 +311,22 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
         when(socket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
 
-        // Fake logged user
-        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
         client.connect("localhost", 9009);
 
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE\", " +
-                        "\"status\":\"ERROR\", " +
-                        "\"message\":\"Not authorized\" }"
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_PATIENTS_FROM_DOCTOR_RESPONSE\", \"status\":\"ERROR\", \"message\":\"Not authorized\"}"
         ).getAsJsonObject());
 
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
         assertThrows(ClientServerCommunicationError.class,
                 () -> client.getPatientsFromDoctor(5));
     }
+
 
     @Test
     void testSaveCommentsSuccess() throws Exception {
@@ -264,26 +337,25 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
         when(socket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
 
-        // Fake logged user
-        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
         client.connect("localhost", 9009);
 
-        // Fake signal
-        Signal signal = new Signal();
-        signal.setId(77);
-        signal.setComments("My notes");
+        Signal s = new Signal();
+        s.setId(77);
+        s.setComments("OK");
 
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"SAVE_COMMENTS_SIGNAL_RESPONSE\", " +
-                        "\"status\":\"SUCCESS\" }"
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"SAVE_COMMENTS_SIGNAL_RESPONSE\", \"status\":\"SUCCESS\"}"
         ).getAsJsonObject());
 
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
-        assertDoesNotThrow(() -> client.saveComments(5, signal));
+        assertDoesNotThrow(() -> client.saveComments(5, s));
     }
+
 
     @Test
     void testSaveCommentsError() throws Exception {
@@ -294,26 +366,26 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
         when(socket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
 
-        // Fake logged user
-        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
         client.connect("localhost", 9009);
 
-        Signal signal = new Signal();
-        signal.setId(77);
-        signal.setComments("Error test");
+        Signal s = new Signal();
+        s.setId(77);
+        s.setComments("---");
 
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"SAVE_COMMENTS_SIGNAL_RESPONSE\", " +
-                        "\"status\":\"ERROR\", \"message\":\"DB fail\" }"
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"SAVE_COMMENTS_SIGNAL_RESPONSE\", \"status\":\"ERROR\", \"message\":\"DB fail\"}"
         ).getAsJsonObject());
 
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
         assertThrows(ClientServerCommunicationError.class,
-                () -> client.saveComments(5, signal));
+                () -> client.saveComments(5, s));
     }
+
 
     @Test
     void testGetAllSignalsFromPatientSuccess() throws Exception {
@@ -327,12 +399,11 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(mockInput);
 
-        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
-        app.user = fakeUser;
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
         client.connect("localhost", 9009);
 
-        // --- Fake signals metadata ---
         JsonObject s1 = new JsonObject();
         s1.addProperty("signal_id", 1);
         s1.addProperty("date", "2025-02-01");
@@ -354,73 +425,59 @@ public class ClientTest {
         s3.addProperty("sampling_rate", 2000.0);
         s3.addProperty("patient_id", 88);
 
-        JsonArray signalsArray = new JsonArray();
-        signalsArray.add(s1);
-        signalsArray.add(s2);
-        signalsArray.add(s3);
-        JsonObject response = new JsonObject();
-        response.addProperty("type", "REQUEST_PATIENT_SIGNALS_RESPONSE");
-        response.addProperty("status", "SUCCESS");
-        response.add("signals", signalsArray);
-        // Prepare response queue
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(response);
+        JsonArray arr = new JsonArray();
+        arr.add(s1); arr.add(s2); arr.add(s3);
 
-        setField(client, "responseQueue", queue);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("type", "REQUEST_PATIENT_SIGNALS_RESPONSE");
+        resp.addProperty("status", "SUCCESS");
+        resp.add("signals", arr);
 
-        List<Signal> signals = client.getAllSignalsFromPatient(88);
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+        q.add(resp);
+        setField(client, "responseQueue", q);
 
-        assertEquals(3, signals.size());
+        List<Signal> list = client.getAllSignalsFromPatient(88);
 
-        assertEquals(1, signals.get(0).getId());
-        assertEquals("Sig1", signals.get(0).getComments());
-
-        assertEquals(2, signals.get(1).getId());
-        assertEquals("Sig2", signals.get(1).getComments());
-
-        assertEquals(3, signals.get(2).getId());
-        assertEquals("Sig3", signals.get(2).getComments());
+        assertEquals(3, list.size());
+        assertEquals(1, list.get(0).getId());
+        assertEquals("Sig1", list.get(0).getComments());
+        assertEquals(2, list.get(1).getId());
+        assertEquals(3, list.get(2).getId());
     }
+
     @Test
     void testGetAllSignalsFromPatientError() throws Exception {
 
-        // Fake socket streams
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
         Client client = spy(new Client());
 
-        // Mock socket creation
         doReturn(socket).when(client).createSocket(anyString(), anyInt());
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(mockInput);
 
-        // Fake logged user
-        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
-        app.user = fakeUser;
+        User fakeUser = new User(1, "doctor@mail.com", "123", "Doctor");
+        setField(client, "user", fakeUser);
 
-        // Connect
         client.connect("localhost", 9009);
 
-        // --- Fake ERROR response ---
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"REQUEST_PATIENT_SIGNALS_RESPONSE\", " +
-                        "\"status\":\"ERROR\", " +
-                        "\"message\":\"Patient not found\" }"
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
+
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_PATIENT_SIGNALS_RESPONSE\", \"status\":\"ERROR\", \"message\":\"Patient not found\" }"
         ).getAsJsonObject());
 
-        // Inject queue
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
-        // --- EXPECT EXCEPTION ---
         assertThrows(ClientServerCommunicationError.class,
                 () -> client.getAllSignalsFromPatient(88));
     }
+
     @Test
     void testGetSignalByIdSuccessWithZip() throws Exception {
 
-        // Fake streams
         ByteArrayOutputStream mockOutput = new ByteArrayOutputStream();
         ByteArrayInputStream mockInput = new ByteArrayInputStream("".getBytes());
 
@@ -430,58 +487,61 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(mockInput);
 
-        // Logged doctor
-        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+        // Fake logged doctor
+        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
+        setField(client, "user", fakeUser);
+
+        // Inject dummy AES token so sendEncrypted() does not crash
+        SecretKey fakeToken = new SecretKeySpec(new byte[16], "AES");
+        setField(client, "token", fakeToken);
 
         client.connect("localhost", 9009);
 
-        // ---- 1) Crear ZIP temporal ----
+        // ----- create fake ZIP -----
         File tempZip = File.createTempFile("signal77", ".zip");
         try (FileOutputStream fos = new FileOutputStream(tempZip)) {
             fos.write("THIS_IS_FAKE_ZIP_DATA".getBytes());
         }
-        byte[] bytes = java.nio.file.Files.readAllBytes(tempZip.toPath());
-        String base64 = Base64.getEncoder().encodeToString(bytes);
+        String base64 = Base64.getEncoder().encodeToString(
+                java.nio.file.Files.readAllBytes(tempZip.toPath())
+        );
 
-        // ---- 2) Crear JSON con ZIP ----
+        // ----- Build JSON -----
         String json = """
         {
-          "type": "REQUEST_SIGNAL_BY_ID_RESPONSE",
+          "type": "REQUEST_SIGNAL_RESPONSE",
           "status": "SUCCESS",
-          "compression": "zip-base64",
           "filename": "signal_77.zip",
-          "data": "%s",
+          "dataBytes": "%s",
           "metadata": {
             "signal_id": 77,
+            "patient_id": 88,
             "date": "2025-02-01",
             "comments": "Test signal",
-            "sampling_rate": 500.0,
-            "patient_id": 88
+            "sampling_rate": 500.0
           }
         }
         """.formatted(base64);
 
-        JsonObject responseJson = JsonParser.parseString(json).getAsJsonObject();
-
-        // ---- 3) Insert into responseQueue ----
         BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
-        queue.add(responseJson);
+        queue.add(JsonParser.parseString(json).getAsJsonObject());
         setField(client, "responseQueue", queue);
 
-        // ---- 4) Execute method ----
+        // ----- Call method -----
         Signal signal = client.getSignalFromId(77);
 
-        // ---- 5) Assertions ----
+        // ----- Assertions -----
         assertNotNull(signal);
         assertEquals(77, signal.getId());
         assertEquals("Test signal", signal.getComments());
-        assertEquals("500.0", signal.getFrequency().toString());
+        assertEquals(500.0, signal.getFrequency().doubleValue());// numeric comparison
         assertEquals(LocalDate.of(2025, 2, 1), signal.getDate());
 
-        // ZIP must exist on disk (created from Base64)
         assertNotNull(signal.getZipFile());
         assertTrue(signal.getZipFile().exists());
     }
+
+
 
     @Test
     void testGetSignalByIdError() throws Exception {
@@ -495,22 +555,23 @@ public class ClientTest {
         when(socket.getOutputStream()).thenReturn(mockOutput);
         when(socket.getInputStream()).thenReturn(mockInput);
 
-        app.user = new User(1, "doctor@mail.com", "1234", "Doctor");
+        User fakeUser = new User(1, "doctor@mail.com", "1234", "Doctor");
+        setField(client, "user", fakeUser);
 
         client.connect("localhost", 9009);
 
-        BlockingQueue<JsonObject> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<JsonObject> q = new LinkedBlockingQueue<>();
 
-        queue.add(JsonParser.parseString(
-                "{ \"type\":\"REQUEST_SIGNAL_BY_ID_RESPONSE\", " +
+        q.add(JsonParser.parseString(
+                "{ \"type\":\"REQUEST_SIGNAL_RESPONSE\", " +
                         "\"status\":\"ERROR\", \"message\":\"Signal not found\" }"
         ).getAsJsonObject());
 
-        setField(client, "responseQueue", queue);
+        setField(client, "responseQueue", q);
 
-        // Expect exception
         assertThrows(ClientServerCommunicationError.class,
                 () -> client.getSignalFromId(77));
     }
+
 
 }

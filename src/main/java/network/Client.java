@@ -138,8 +138,8 @@ public class Client {
                                     if (verified) {
                                         System.out.println("Token verified and trusted");
                                         //Reconstruction of the Secret Key on the client side
-                                        this.token = new SecretKeySpec(tokenBytes, 0, tokenBytes.length, "AES");
-                                        tokenReady.countDown();
+                                        javax.crypto.SecretKey secretKey = new SecretKeySpec(tokenBytes, 0, tokenBytes.length, "AES");
+                                        saveToken(secretKey);
                                         System.out.println("🔑 Server's AES Token (Base64): " + Base64.getEncoder().encodeToString(this.token.getEncoded()));
                                     } else {
                                         System.out.println("Signature verification failed. Do not trust the token.");
@@ -819,6 +819,14 @@ public class Client {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * TEST-ONLY method that manually injects a token and unblocks the login latch.
+     */
+    public void saveToken(SecretKey testToken) {
+        this.token = testToken;
+        this.tokenReady.countDown();
     }
 
     public static void main(String args[]) throws IOException {

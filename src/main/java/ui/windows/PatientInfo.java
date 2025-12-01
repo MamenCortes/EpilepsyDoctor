@@ -669,6 +669,19 @@ public class PatientInfo extends JPanel implements ActionListener, MouseListener
 
     }
 
+    /**
+     * Saves comments in the Patient's signal recording
+     * @param signal
+     * @param comments
+     */
+    public void saveCommentsInSignal(Signal signal, String comments) {
+        for(Signal s : patient.getRecordings()) {
+            if(s.getId() == signal.getId()) {
+                s.setComments(comments);
+            }
+        }
+    }
+
     @Override
     public void mouseClicked(MouseEvent e) {
 

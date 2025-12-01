@@ -418,4 +418,23 @@ public class Application extends JFrame {
 
         dialog.setVisible(true);
     }
+
+    /**
+     * Saves comments in a Patient's signal
+     * @param signal
+     * @param patient
+     * @param comments
+     */
+    public void saveCommentsInSignal(Signal signal, Patient patient, String comments) {
+        for(Patient p : doctor.getPatients()){
+            if(p.getId() == patient.getId()){
+                for(Signal s : p.getRecordings()) {
+                    if(s.getId() == signal.getId()) {
+                        s.setComments(comments);
+                    }
+                }
+
+            }
+        }
+    }
 }

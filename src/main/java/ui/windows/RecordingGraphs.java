@@ -160,7 +160,8 @@ public class RecordingGraphs extends JPanel implements ActionListener, MouseList
     private void saveComments() throws IOException, InterruptedException {
         String comments = commentsTextArea.getText();
         if(!signal.getComments().equals(comments)){
-            signal.setComments(comments);
+            parentPanel.saveCommentsInSignal(signal, comments);
+            appMain.saveCommentsInSignal(signal, patient, comments);
             appMain.client.saveComments(patient.getId(), signal);
         }
     }
