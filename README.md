@@ -35,11 +35,9 @@ Upon executing the system for the first time, the following users will be automa
 
 | Email  | Password   | Role     |
 |-----------|------------|----------|
-| @nightguardian.com     | 12345678   | Doctor    |
-| @nightguardian.com     | 12345678   | Doctor    |
-| @nightguardian.com     | 12345678   | Doctor    |
+| ester.exposito@nightguardian.com     | esterexposito1   | Doctor    |
 
-*The password 12345678 was used by default. However, it can be changed from the LogIn view*
+> Disclaimer: their public and private keys are in the project for testing purposes
 
 ## Summary of Doctor Capabilities
 
