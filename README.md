@@ -29,6 +29,12 @@ This guide explains how to use the Doctor Application step by step, following th
     java -jar EpilepsyDoctor.jar
     ```
    Alternatively, you may run the program from your IDE by executing the `Application.java` class inside the project.
+
+> This app works with 2 other applications:
+> * [Admin App](https://github.com/MariaMM04/EpilepsyAdmin)
+> * [Patient App](https://github.com/MamenCortes/EpilepsyPatient)
+>   
+> Check those projects for a full experience of the platform.
    
 ## Initial Conditions
 Upon executing the system for the first time, the following users will be automatically added to facilitate the system's navigation: 
